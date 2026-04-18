@@ -1,0 +1,12 @@
+[{"fact_key":"taxonomy_2007_split","title":"分类学更新","content":"2007年分子系统学研究后，相关类群从传统Cordyceps框架中重分，Ophiocordyceps成为独立谱系。","category":"taxonomy"},
+{"fact_key":"host_specificity_camponotini","title":"宿主特异性","content":"O. unilateralis复合群主要感染Camponotini蚂蚁，具有明显宿主特异性。","category":"host_range"},
+{"fact_key":"microclimate_requirement","title":"微环境需求","content":"感染后蚂蚁常移动到更适合真菌生长和传播的温湿环境。","category":"ecology"},
+{"fact_key":"death_grip_behavior","title":"死亡咬附行为","content":"典型表现是蚂蚁咬附叶脉或枝条固定，常被称为death grip。","category":"behavior"},
+{"fact_key":"leaf_bite_height","title":"咬附高度特征","content":"在部分热带观测中，感染蚂蚁常固定在离地约25厘米上下的位置。","category":"field_observation"},
+{"fact_key":"optimal_humidity_temp","title":"传播环境范围","content":"报道中常见传播相关环境约为20-30摄氏度和较高湿度（约94%-95%）。","category":"ecology"},
+{"fact_key":"graveyard_pattern","title":"蚂蚁墓地现象","content":"局部区域可出现较高密度感染死亡个体，形成“graveyard”分布。","category":"population_pattern"},
+{"fact_key":"rainy_season_signal","title":"季节性变化","content":"雨季前后常观察到感染个体密度上升，提示降雨与传播窗口相关。","category":"seasonality"},
+{"fact_key":"life_cycle_4_10_days","title":"感染到繁殖时间窗","content":"从感染行为操控到死亡并形成可释放孢子的结构，文献常见约4-10天量级。","category":"lifecycle"},
+{"fact_key":"temperate_exception","title":"温带例外","content":"该类群主要见于热带，但部分暖温带森林也有记录。","category":"distribution"},
+{"fact_key":"human_infection_boundary","title":"人类感染边界","content":"O. unilateralis是昆虫病原真菌，当前科普教学不应将其描述为现实中的“人类僵尸真菌”。","category":"safety_boundary"},
+{"fact_key":"pharma_potential","title":"药用潜力","content":"相关昆虫病原真菌的次级代谢物具有免疫调节、抗肿瘤等研究潜力，但不等于可直接临床使用。","category":"application"}]

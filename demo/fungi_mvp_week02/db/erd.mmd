@@ -1,0 +1,37 @@
+erDiagram
+    users ||--o{ explanation_records : owns
+    users ||--o{ classroom_templates : creates
+
+    users {
+      bigint id PK
+      varchar email
+      varchar password_hash
+      varchar role
+      varchar display_name
+      timestamp created_at
+      timestamp updated_at
+    }
+
+    explanation_records {
+      bigint id PK
+      bigint user_id FK
+      varchar fungus_type
+      varchar host_type
+      int day
+      text symptoms
+      varchar stage_name
+      text biology_explanation
+      text host_behavior_change
+      text teaching_point
+      text safety_note
+      timestamp created_at
+    }
+
+    classroom_templates {
+      bigint id PK
+      bigint owner_user_id FK
+      varchar template_name
+      jsonb input_payload
+      timestamp created_at
+      timestamp updated_at
+    }

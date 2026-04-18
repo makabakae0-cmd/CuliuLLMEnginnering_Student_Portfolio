@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fungi Week01 MVP Prototype</title>
+  <style>
+    body { font-family: "Avenir Next", "PingFang SC", sans-serif; background:#0f172a; color:#e2e8f0; margin:0; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 24px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+    .btn { background:#1e293b; color:#e2e8f0; border:1px solid #334155; border-radius:10px; padding:10px 14px; cursor:pointer; }
+    .btn.active { background:#334155; }
+    .card { background:#111827; border:1px solid #334155; border-radius:14px; padding:18px; margin-top:12px; }
+    .muted { color:#94a3b8; }
+    code { background:#1e293b; padding:2px 6px; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Fungi Simulator - Week01 可点击原型</h1>
+    <p class="muted">目标：确认角色、流程、页面结构，不做真实后端调用。</p>
+
+    <div class="row">
+      <button class="btn active" data-page="login">登录页</button>
+      <button class="btn" data-page="student">学生工作台</button>
+      <button class="btn" data-page="teacher">教师工作台</button>
+      <button class="btn" data-page="generator">解说生成页</button>
+      <button class="btn" data-page="history">历史记录</button>
+      <button class="btn" data-page="settings">设置</button>
+    </div>
+
+    <section class="card" id="page"></section>
+  </div>
+
+  <script>
+    const page = document.getElementById('page');
+    const views = {
+      login: `<h2>登录页</h2><p>邮箱 + 密码登录，支持学生/教师角色。</p><p class="muted">下一步：<code>POST /api/auth/login</code></p>`,
+      student: `<h2>学生工作台</h2><p>入口：新建解说、查看历史、接收课堂任务。</p><p class="muted">主按钮：开始解说</p>`,
+      teacher: `<h2>教师工作台</h2><p>入口：管理样本模板、查看班级提交、发布任务。</p><p class="muted">主按钮：发布课堂任务</p>`,
+      generator: `<h2>解说生成页</h2><p>输入：fungus_type / host_type / day / symptoms</p><p>输出：stage_name / biology_explanation / host_behavior_change / teaching_point / safety_note</p><p class="muted">接口：<code>POST /api/explanations/generate</code></p>`,
+      history: `<h2>历史记录页</h2><p>按时间查看个人历史解说结果，支持详情回看。</p><p class="muted">接口：<code>GET /api/explanations/history</code></p>`,
+      settings: `<h2>设置页</h2><p>个人信息、课堂偏好、隐私设置。</p><p class="muted">接口：<code>PATCH /api/users/profile</code></p>`
+    };
+
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        page.innerHTML = views[btn.dataset.page];
+      });
+    });
+
+    page.innerHTML = views.login;
+  </script>
+</body>
+</html>
