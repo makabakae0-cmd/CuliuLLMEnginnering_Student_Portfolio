@@ -1,0 +1,6 @@
+pip>=25.0
+setuptools>=75.0
+wheel>=0.45
+pandas>=2.2
+sentence-transformers>=5.4.0
+chromadb>=1.5.8

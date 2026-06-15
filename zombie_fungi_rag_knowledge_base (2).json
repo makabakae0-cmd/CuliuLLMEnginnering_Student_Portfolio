@@ -1,0 +1,735 @@
+{
+  "project": "Zombie Fungi Simulator RAG Knowledge Base",
+  "created_utc": "2026-04-25T01:46:32Z",
+  "language": "en",
+  "topic": "zombie-ant fungus / Ophiocordyceps unilateralis sensu lato",
+  "version": "1.0",
+  "notes": [
+    "Designed for retrieval-augmented generation (RAG) and simulation/game logic.",
+    "Entries are paraphrased facts rather than long copied text.",
+    "Scientific names and technical terms are preserved for accuracy."
+  ],
+  "sources": [
+    {
+      "source_id": "britannica_zombie_ant_fungus",
+      "title": "Zombie-ant fungus | Britannica",
+      "website": "Encyclopaedia Britannica",
+      "url": "https://www.britannica.com/science/zombie-ant-fungus",
+      "type": "encyclopedia overview",
+      "used_for": [
+        "basic description",
+        "taxonomy",
+        "life cycle",
+        "behavior modification",
+        "ant adaptations",
+        "popular culture note"
+      ]
+    },
+    {
+      "source_id": "pmc_ophiocordyceps_unilateralis_complex",
+      "title": "Ophiocordyceps unilateralis and related hypocrealean fungi / species complex source",
+      "website": "PMC / scientific article excerpt provided by user",
+      "url": "https://pmc.ncbi.nlm.nih.gov/",
+      "type": "scientific research article",
+      "used_for": [
+        "species complex",
+        "tropical ecosystem diversity",
+        "host-pathogen system",
+        "infection strategy",
+        "spore/stalk morphology",
+        "microclimate factors"
+      ]
+    },
+    {
+      "source_id": "bmc_ecology_behavioral_mechanisms",
+      "title": "Behavioral mechanisms and morphological symptoms of zombie ants dying from fungal infection",
+      "website": "BMC Ecology / PubMed / PMC",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3118224/",
+      "type": "scientific research article",
+      "used_for": [
+        "death grip",
+        "convulsions",
+        "random walking",
+        "host behavior",
+        "simulation behavior states"
+      ]
+    }
+  ],
+  "core_summary": {
+    "short": "The zombie-ant fungus, Ophiocordyceps unilateralis sensu lato, is a parasitic fungus that infects mainly carpenter ants, changes their behavior, kills them, and then grows a stalk from the dead ant to release spores.",
+    "medium": "Ophiocordyceps unilateralis s.l. infects formicine ants, especially Camponotus carpenter ants. Spores attach to an ant, germinate, penetrate the exoskeleton, grow through the body, and manipulate behavior so the ant leaves normal trails, climbs vegetation, and bites down in a death grip. After death, the fungus digests/mummifies the cadaver and produces a fruiting stalk that releases spores. The system is strongly affected by habitat, microclimate, host species, and fungal species diversity.",
+    "simulation_angle": "A simulator can model the fungus as a multi-stage parasite with probabilistic infection, host behavior manipulation, environmental modifiers, ant colony defenses, and spore dispersal from infected cadavers."
+  },
+  "taxonomy": {
+    "common_names": [
+      "zombie-ant fungus",
+      "cordyceps"
+    ],
+    "scientific_name": "Ophiocordyceps unilateralis",
+    "broad_scientific_usage": "Ophiocordyceps unilateralis sensu lato / O. unilateralis s.l.",
+    "kingdom": "Fungi",
+    "phylum": "Ascomycota",
+    "class": "Sordariomycetes",
+    "order": "Hypocreales",
+    "family": "Ophiocordycipitaceae",
+    "genus": "Ophiocordyceps",
+    "former_genus": "Cordyceps",
+    "taxonomy_notes": [
+      "The taxonomy is contentious because what is often called O. unilateralis may represent a species complex.",
+      "Some research suggests different carpenter ant species may be associated with different fungal species.",
+      "Use 'sensu lato' when speaking broadly about the complex rather than one narrowly defined species."
+    ]
+  },
+  "hosts": {
+    "primary_hosts": [
+      "carpenter ants",
+      "Camponotus species"
+    ],
+    "host_group": "formicine ants",
+    "host_specificity": "Likely high; specific fungus lineages may specialize on particular ant hosts.",
+    "does_not_infect_humans": true,
+    "human_infection_note": "The real zombie-ant fungus does not infect humans. Human zombie scenarios in games/shows are fictional extrapolations."
+  },
+  "habitat_and_distribution": {
+    "distribution": [
+      "pantropical forests",
+      "tropical forest ecosystems",
+      "some warm-temperate forest systems"
+    ],
+    "more_common_in": "tropical forests",
+    "microhabitats": [
+      "forest floor",
+      "understory vegetation",
+      "leaf midribs",
+      "leaf margins",
+      "twigs",
+      "humid low-growing plants"
+    ],
+    "environmental_factors": [
+      "humidity",
+      "temperature",
+      "light",
+      "distance from ground",
+      "leaf vs twig availability",
+      "ant traffic routes"
+    ],
+    "simulation_implications": [
+      "Increase spore survival and fruiting success in humid zones.",
+      "Make forest-floor contact increase infection risk.",
+      "Use habitat type to decide whether ants bite leaves or twigs.",
+      "Let temperature and humidity affect stalk development time and spore release success."
+    ]
+  },
+  "life_cycle": [
+    {
+      "stage_id": "spore_on_forest_floor",
+      "stage_name": "Sticky spore waiting for host",
+      "description": "The fungus begins as a sticky spore in the environment, often on the forest floor or near areas where ants pass.",
+      "inputs": [
+        "available spores",
+        "passing ant",
+        "suitable humidity"
+      ],
+      "outputs": [
+        "spore attachment"
+      ],
+      "sim_rules": {
+        "infection_probability_modifiers": {
+          "high_humidity": "+",
+          "ant_on_forest_floor": "+",
+          "ant_groomed_recently": "-",
+          "low_spore_density": "-"
+        }
+      }
+    },
+    {
+      "stage_id": "attachment_and_germination",
+      "stage_name": "Attachment and germination",
+      "description": "If a spore attaches to an ant, it can germinate and produce infective hyphae that breach the ant exoskeleton.",
+      "inputs": [
+        "attached spore",
+        "host cuticle/exoskeleton"
+      ],
+      "outputs": [
+        "hyphal penetration",
+        "early infection"
+      ],
+      "sim_rules": {
+        "failure_conditions": [
+          "social grooming removes spores",
+          "host immune response stops infection"
+        ]
+      }
+    },
+    {
+      "stage_id": "internal_growth",
+      "stage_name": "Internal fungal growth",
+      "description": "After entering the body, the fungus grows through host tissues and may suppress host immune and stress responses.",
+      "inputs": [
+        "successful penetration"
+      ],
+      "outputs": [
+        "fungal biomass increases",
+        "behavior manipulation becomes possible"
+      ],
+      "sim_rules": {
+        "infection_progress_variable": "fungal_load",
+        "threshold_for_behavior_change": "critical fungal mass",
+        "source_time_hint_days": "often around 16-24 days after infection"
+      }
+    },
+    {
+      "stage_id": "behavior_manipulation",
+      "stage_name": "Zombie-like behavior modification",
+      "description": "The infected ant leaves normal routines, stops following established trails, becomes less responsive, has convulsions, falls from canopy, wanders, then climbs vegetation.",
+      "inputs": [
+        "high fungal load",
+        "time-of-day trigger",
+        "available vegetation"
+      ],
+      "outputs": [
+        "ant positioned for death grip"
+      ],
+      "sim_rules": {
+        "possible_behaviors": [
+          "leave nest",
+          "ignore trail",
+          "reduced response",
+          "convulse",
+          "fall",
+          "random walk",
+          "climb plant"
+        ],
+        "ai_state": "infected_manipulated",
+        "movement_bias": "toward warm, humid, low vegetation suitable for spore dispersal"
+      }
+    },
+    {
+      "stage_id": "death_grip",
+      "stage_name": "Death grip",
+      "description": "The ant locks its mandibles onto a leaf vein, leaf margin, or twig. This biting behavior secures the ant before death.",
+      "inputs": [
+        "moribund ant",
+        "correct substrate",
+        "final infection stage"
+      ],
+      "outputs": [
+        "fixed cadaver",
+        "fungal fruiting location"
+      ],
+      "sim_rules": {
+        "location_by_ecosystem": {
+          "rainforest": "leaf vein or leaf margin",
+          "warm_temperate_forest": "twig"
+        },
+        "death_follows_shortly_after": true
+      }
+    },
+    {
+      "stage_id": "cadaver_colonization",
+      "stage_name": "Cadaver digestion and mummification",
+      "description": "After death, fungal tissue continues to colonize the ant body, digesting and mummifying the cadaver while protecting it from scavengers and microbes.",
+      "inputs": [
+        "dead attached ant",
+        "suitable microclimate"
+      ],
+      "outputs": [
+        "secured fungal platform",
+        "stalk growth"
+      ],
+      "sim_rules": {
+        "risks": [
+          "microbial competition",
+          "scavengers",
+          "too dry",
+          "too cold"
+        ],
+        "defense_feature": "fungal growth may protect the cadaver as a resource"
+      }
+    },
+    {
+      "stage_id": "stalk_and_spore_release",
+      "stage_name": "Fruiting stalk and spore release",
+      "description": "The fungus grows a stalk from the ant, often from the head/neck region, and releases spores from reproductive structures to continue the cycle.",
+      "inputs": [
+        "mature cadaver",
+        "microclimate conditions",
+        "time"
+      ],
+      "outputs": [
+        "new spores",
+        "infection zone"
+      ],
+      "sim_rules": {
+        "spore_cloud_radius": "depends on height, humidity, airflow, and substrate position",
+        "repeat_cycle": true
+      }
+    }
+  ],
+  "behavioral_symptoms": {
+    "infected_ant_behaviors": [
+      "leaves nest outside normal foraging time",
+      "does not follow established ant trails",
+      "reduced response to external stimuli, including other ants",
+      "sporadic convulsions",
+      "falls from canopy to forest floor",
+      "random or aimless walking",
+      "climbs low vegetation",
+      "orients body in a specific position",
+      "locks mandibles onto plant substrate",
+      "dies shortly after death grip"
+    ],
+    "death_grip": {
+      "definition": "A final biting/mandible-locking behavior that fixes the dying ant to vegetation.",
+      "function": "Keeps the cadaver in a position favorable for fungal development and spore dispersal.",
+      "substrates": [
+        "leaf midrib",
+        "leaf margin",
+        "twig"
+      ],
+      "ecosystem_variation": "Rainforest cases are often associated with leaves; warm-temperate cases may use twigs."
+    },
+    "graveyards": {
+      "definition": "Clusters of dead infected ants attached to vegetation, sometimes at similar heights or locations.",
+      "simulation_use": "Create infection hotspots where spore density and future infection risk are higher."
+    }
+  },
+  "mechanisms": {
+    "important_note": "The fungus does not appear to simply 'enter the brain and control the mind.' The mechanism is more complex and involves body tissues, gene expression, muscle interaction, and chemical signaling.",
+    "known_or_suggested_mechanisms": [
+      {
+        "mechanism": "host gene expression changes",
+        "details": "The fungus may activate or suppress ant genes during infection, including genes related to immune and stress responses."
+      },
+      {
+        "mechanism": "muscle invasion",
+        "details": "Fungal cells can invade host muscle fibers and may contribute to tremors and biting behavior."
+      },
+      {
+        "mechanism": "tryptophan metabolism effects",
+        "details": "Gene expression linked to tryptophan metabolism may be involved in tremors and biting behavior."
+      },
+      {
+        "mechanism": "neuromodulatory chemicals",
+        "details": "The fungus may secrete compounds near the central and peripheral nervous systems, influencing behavior without directly occupying the brain."
+      },
+      {
+        "mechanism": "bacteria-like toxins",
+        "details": "Unusual toxins may interfere with chemical signaling between ants."
+      },
+      {
+        "mechanism": "RNA silencing / protein-expression interaction",
+        "details": "The research excerpt suggests host-pathogen interaction may involve complex molecular regulation before visible protein-expression effects."
+      }
+    ],
+    "simulation_abstraction": {
+      "recommended_model": "Use a hidden infection_progress value that changes movement, response, trail-following, and biting probability once thresholds are crossed.",
+      "avoid_overclaiming": "Do not describe it as direct brain takeover unless it is explicitly fictionalized."
+    }
+  },
+  "ant_defenses_and_adaptations": {
+    "adaptations": [
+      {
+        "name": "arboreal behavior",
+        "description": "Carpenter ants in infested areas may spend more time above the forest floor, reducing contact with spores."
+      },
+      {
+        "name": "social grooming",
+        "description": "Ants can remove spores from each other before infection succeeds."
+      },
+      {
+        "name": "removal of infected members",
+        "description": "Colonies may carry infected ants away from the nest or high-traffic trails to reduce spread."
+      },
+      {
+        "name": "graveyard avoidance",
+        "description": "Ants may avoid areas with dead infected ants, lowering exposure to spore hotspots."
+      }
+    ],
+    "simulation_rules": [
+      "Add a grooming action that reduces attached_spore_count.",
+      "Add colony hygiene behavior that moves infected ants away from nest nodes.",
+      "Add avoidance pathfinding around graveyard cells once detected.",
+      "Make arboreal ants less exposed to forest-floor spores but still vulnerable in infected vegetation zones."
+    ]
+  },
+  "species_complex_and_biodiversity": {
+    "main_claim": "O. unilateralis sensu lato likely represents a complex of many related species rather than a single simple species everywhere.",
+    "important_points": [
+      "The fungus has a broad pantropical distribution on formicine ants.",
+      "Research in Brazilian Atlantic Forest fragments found unexpected diversity within the complex.",
+      "There may be tens or hundreds of species still to delimit within the complex if similar patterns occur globally.",
+      "Symbiotic lifestyles can drive speciation, so host-specific fungal lineages may be common.",
+      "Fungal diversity in tropical ecosystems is probably underdescribed."
+    ],
+    "simulation_use": [
+      "Represent multiple fungal strains/species with different host preferences.",
+      "Make fungal lineages specialize on different ant species.",
+      "Use biome-specific traits: rainforest strains favor leaf biting; temperate strains may favor twig biting.",
+      "Let new fungal variants emerge through mutation/evolution mechanics."
+    ]
+  },
+  "host_pathogen_system": {
+    "pathogen_challenges": [
+      "attach to arthropod exoskeleton",
+      "penetrate exoskeleton",
+      "avoid or suppress host defenses",
+      "control host behavior before killing it",
+      "protect the cadaver from microbes and scavengers",
+      "produce reproductive structures",
+      "release spores when targets are likely nearby"
+    ],
+    "life_phases": [
+      "parasitic phase: living inside/manipulating host",
+      "necrotrophic phase: killing and consuming host tissue",
+      "saprophytic phase: growing on/through dead cadaver"
+    ],
+    "morphology": {
+      "stalk": "A clava/stalk may emerge from behind the head or dorsal neck region of the ant.",
+      "stromatal_plate": "Sexual structures may be borne laterally on the stalk.",
+      "asci": "Sac-like structures involved in producing spores.",
+      "ascospores": "Large sexual spores can be released under pressure from structures on the stalk."
+    },
+    "environmental_timing": "The system may be timed with ant activity and suitable microclimatic conditions such as light, temperature, and humidity."
+  },
+  "simulator_design": {
+    "entities": [
+      {
+        "entity": "Ant",
+        "suggested_properties": [
+          "species",
+          "health",
+          "immune_strength",
+          "location",
+          "trail_following",
+          "is_grooming",
+          "infection_status",
+          "fungal_load",
+          "awareness",
+          "colony_id"
+        ]
+      },
+      {
+        "entity": "Fungus",
+        "suggested_properties": [
+          "strain",
+          "host_preference",
+          "spore_density",
+          "growth_rate",
+          "humidity_tolerance",
+          "temperature_tolerance",
+          "manipulation_strength"
+        ]
+      },
+      {
+        "entity": "Spore",
+        "suggested_properties": [
+          "viability",
+          "age",
+          "position",
+          "attachment_chance",
+          "germination_chance"
+        ]
+      },
+      {
+        "entity": "Cadaver",
+        "suggested_properties": [
+          "attached_substrate",
+          "height",
+          "maturity",
+          "stalk_present",
+          "spore_release_rate",
+          "microbial_competition"
+        ]
+      },
+      {
+        "entity": "EnvironmentCell",
+        "suggested_properties": [
+          "humidity",
+          "temperature",
+          "light",
+          "vegetation_type",
+          "height",
+          "spore_density",
+          "is_graveyard",
+          "ant_traffic"
+        ]
+      }
+    ],
+    "infection_states": [
+      "healthy",
+      "spore_attached",
+      "germinating",
+      "internal_infection",
+      "manipulated_behavior",
+      "death_grip",
+      "dead_cadaver",
+      "fruiting_body",
+      "spore_releasing"
+    ],
+    "example_state_transitions": [
+      {
+        "from": "healthy",
+        "to": "spore_attached",
+        "trigger": "contact with viable spore"
+      },
+      {
+        "from": "spore_attached",
+        "to": "germinating",
+        "trigger": "spore not removed by grooming + suitable conditions"
+      },
+      {
+        "from": "germinating",
+        "to": "internal_infection",
+        "trigger": "hyphae penetrate exoskeleton"
+      },
+      {
+        "from": "internal_infection",
+        "to": "manipulated_behavior",
+        "trigger": "fungal_load crosses threshold"
+      },
+      {
+        "from": "manipulated_behavior",
+        "to": "death_grip",
+        "trigger": "correct time-of-day + suitable substrate nearby"
+      },
+      {
+        "from": "death_grip",
+        "to": "dead_cadaver",
+        "trigger": "host dies"
+      },
+      {
+        "from": "dead_cadaver",
+        "to": "fruiting_body",
+        "trigger": "fungus matures under suitable humidity/temperature"
+      },
+      {
+        "from": "fruiting_body",
+        "to": "spore_releasing",
+        "trigger": "stalk/stromata mature"
+      }
+    ],
+    "sample_variables": {
+      "humidity": "0.0-1.0",
+      "temperature_c": "numeric",
+      "spore_density": "spores per cell / arbitrary unit",
+      "fungal_load": "0.0-1.0",
+      "grooming_rate": "actions per minute or per tick",
+      "trail_adherence": "0.0-1.0",
+      "death_grip_probability": "function of fungal_load, substrate, time_of_day, humidity",
+      "spore_release_rate": "function of cadaver maturity, humidity, stalk presence"
+    },
+    "example_rules_pseudocode": [
+      "if ant.location.spore_density > 0 and random() < attachment_chance: ant.state = 'spore_attached'",
+      "if ant.state == 'spore_attached' and ant.groomed: reduce attached_spores",
+      "if attached_spores > 0 and humidity > threshold: ant.state = 'germinating'",
+      "if fungal_load > 0.65: ant.trail_adherence decreases and random_walk increases",
+      "if fungal_load > 0.85 and suitable_substrate nearby: ant.state = 'death_grip'",
+      "if cadaver.maturity > threshold and humidity suitable: release spores into nearby cells"
+    ]
+  },
+  "rag_chunks": [
+    {
+      "chunk_id": "overview_001",
+      "title": "Basic identity",
+      "text": "Zombie-ant fungus, Ophiocordyceps unilateralis sensu lato, is a parasitic fungus that mainly infects carpenter ants in the genus Camponotus. It changes host behavior before killing the ant and using the cadaver to release spores.",
+      "tags": [
+        "overview",
+        "identity",
+        "host"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus"
+      ]
+    },
+    {
+      "chunk_id": "taxonomy_001",
+      "title": "Taxonomy",
+      "text": "The fungus belongs to Kingdom Fungi, Phylum Ascomycota, Class Sordariomycetes, Order Hypocreales, Family Ophiocordycipitaceae, Genus Ophiocordyceps. It was formerly placed in Cordyceps and is still sometimes called cordyceps.",
+      "tags": [
+        "taxonomy",
+        "classification"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus"
+      ]
+    },
+    {
+      "chunk_id": "life_cycle_001",
+      "title": "Spore to infection",
+      "text": "The life cycle can begin when a sticky spore attaches to a passing carpenter ant. The spore germinates and produces hyphae that penetrate the ant's exoskeleton, allowing the fungus to grow inside the body.",
+      "tags": [
+        "life_cycle",
+        "spores",
+        "infection"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus"
+      ]
+    },
+    {
+      "chunk_id": "life_cycle_002",
+      "title": "Manipulation and death grip",
+      "text": "After internal growth, the fungus manipulates the ant so it leaves normal behavior patterns, climbs vegetation, and bites down permanently. This death grip secures the ant in a location favorable for fungal growth and spore dispersal.",
+      "tags": [
+        "life_cycle",
+        "behavior",
+        "death_grip"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus",
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "behavior_001",
+      "title": "Zombie-like symptoms",
+      "text": "Infected ants may stop following trails, become less responsive to other ants, convulse, fall from the canopy, wander without clear direction, climb low vegetation, and lock their mandibles onto a plant before dying.",
+      "tags": [
+        "behavior",
+        "symptoms",
+        "simulation_states"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus",
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "mechanism_001",
+      "title": "Not simple brain takeover",
+      "text": "The fungus does not seem to directly enter the ant brain. Instead, it may affect gene expression, muscle fibers, nervous-system signaling, and chemical communication. This makes the real mechanism more complex than simple mind control.",
+      "tags": [
+        "mechanism",
+        "brain",
+        "muscle",
+        "genes"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus"
+      ]
+    },
+    {
+      "chunk_id": "mechanism_002",
+      "title": "Host-pathogen challenges",
+      "text": "The fungus must attach to and penetrate the exoskeleton, avoid or suppress host defenses, manipulate behavior, kill the host, protect the cadaver from decay and scavengers, and then produce spores from the dead ant.",
+      "tags": [
+        "host_pathogen",
+        "infection_strategy",
+        "simulation_rules"
+      ],
+      "source_ids": [
+        "pmc_ophiocordyceps_unilateralis_complex"
+      ]
+    },
+    {
+      "chunk_id": "defense_001",
+      "title": "Ant defenses",
+      "text": "Carpenter ants may reduce infection risk by avoiding spore-heavy forest-floor areas, grooming spores off each other, moving infected colony members away from trails or nests, and avoiding infected-ant graveyards.",
+      "tags": [
+        "ant_defense",
+        "grooming",
+        "avoidance",
+        "colony_behavior"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus"
+      ]
+    },
+    {
+      "chunk_id": "ecology_001",
+      "title": "Habitat and microclimate",
+      "text": "Zombie-ant fungus is most common in tropical forests but can also occur in warm-temperate forests. Light, temperature, humidity, vegetation type, and ant activity can affect the success of spore release and infection.",
+      "tags": [
+        "ecology",
+        "humidity",
+        "temperature",
+        "habitat"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus",
+        "pmc_ophiocordyceps_unilateralis_complex"
+      ]
+    },
+    {
+      "chunk_id": "biodiversity_001",
+      "title": "Species complex",
+      "text": "Ophiocordyceps unilateralis sensu lato may include many species or lineages, potentially with different host ants and regional adaptations. Tropical forests may contain large amounts of undescribed fungal diversity.",
+      "tags": [
+        "species_complex",
+        "biodiversity",
+        "host_specificity"
+      ],
+      "source_ids": [
+        "pmc_ophiocordyceps_unilateralis_complex",
+        "britannica_zombie_ant_fungus"
+      ]
+    },
+    {
+      "chunk_id": "simulation_001",
+      "title": "Suggested infection-state system",
+      "text": "For a simulator, model infection as states: healthy, spore attached, germinating, internal infection, manipulated behavior, death grip, dead cadaver, fruiting body, and spore releasing. Let humidity, temperature, grooming, host species, and fungal strain modify transitions.",
+      "tags": [
+        "simulation",
+        "state_machine",
+        "game_logic"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus",
+        "pmc_ophiocordyceps_unilateralis_complex"
+      ]
+    },
+    {
+      "chunk_id": "safety_accuracy_001",
+      "title": "Human infection accuracy",
+      "text": "The real zombie-ant fungus does not infect humans. Fictional human zombie stories inspired by cordyceps should be treated as speculative fiction, not real biology.",
+      "tags": [
+        "accuracy",
+        "humans",
+        "fiction"
+      ],
+      "source_ids": [
+        "britannica_zombie_ant_fungus"
+      ]
+    }
+  ],
+  "example_questions_for_rag_testing": [
+    "What is zombie-ant fungus?",
+    "What ants does Ophiocordyceps unilateralis infect?",
+    "What are the stages of the zombie-ant fungus life cycle?",
+    "What is the death grip?",
+    "How does humidity affect the fungus in a simulator?",
+    "Does the fungus control the ant brain directly?",
+    "How do ants defend themselves against infection?",
+    "Why might there be many species in the Ophiocordyceps unilateralis complex?",
+    "How should I model zombie fungus infection states in a game?",
+    "Can zombie-ant fungus infect humans?"
+  ],
+  "retrieval_keywords": [
+    "zombie-ant fungus",
+    "Ophiocordyceps unilateralis",
+    "O. unilateralis s.l.",
+    "cordyceps",
+    "Camponotus",
+    "carpenter ant",
+    "formicine ant",
+    "death grip",
+    "spore",
+    "hyphae",
+    "exoskeleton",
+    "mycelium",
+    "fruiting stalk",
+    "stromatal plate",
+    "asci",
+    "ascospores",
+    "tropical forest",
+    "humidity",
+    "temperature",
+    "social grooming",
+    "graveyard",
+    "host manipulation",
+    "parasite",
+    "Hypocreales",
+    "Ophiocordycipitaceae"
+  ]
+}
