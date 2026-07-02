@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fungi Simulator 真菌猎手：智能科普对抗系统</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <nav class="site-nav" id="site-nav" aria-label="主导航">
+        <div class="nav-inner">
+            <a class="nav-brand" href="#home-section" data-nav-target="home-section">
+                <span class="nav-brand-mark" aria-hidden="true">🍄</span>
+                <span class="nav-brand-text">
+                    <strong>Fungi Simulator</strong>
+                    <small>真菌猎手</small>
+                </span>
+            </a>
+
+            <div class="nav-links" id="nav-links">
+                <a class="nav-link active" href="#home-section" data-nav-target="home-section">首页</a>
+                <a class="nav-link" href="#setup-section" data-nav-target="setup-section">开始游戏</a>
+                <a class="nav-link" href="#rag-qa-section" data-nav-target="rag-qa-section">知识问答</a>
+                <a class="nav-link" href="#game-section" data-nav-target="game-section">游戏面板</a>
+            </div>
+
+            <div class="nav-actions">
+                <button class="nav-icon-btn" type="button" id="nav-scroll-top" aria-label="回到顶部" title="回到顶部">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M12 19V5"></path>
+                        <path d="m5 12 7-7 7 7"></path>
+                    </svg>
+                </button>
+                <a class="nav-cta" href="#setup-section" data-nav-target="setup-section">立即开始</a>
+                <button class="nav-toggle" type="button" id="nav-toggle" aria-expanded="false" aria-controls="nav-mobile-panel" aria-label="打开菜单">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M4 7h16"></path>
+                        <path d="M4 12h16"></path>
+                        <path d="M4 17h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="nav-mobile-panel" id="nav-mobile-panel" hidden>
+            <div class="nav-mobile-links">
+                <a class="nav-mobile-link active" href="#home-section" data-nav-target="home-section">首页</a>
+                <a class="nav-mobile-link" href="#setup-section" data-nav-target="setup-section">开始游戏</a>
+                <a class="nav-mobile-link" href="#rag-qa-section" data-nav-target="rag-qa-section">知识问答</a>
+                <a class="nav-mobile-link" href="#game-section" data-nav-target="game-section">游戏面板</a>
+            </div>
+            <a class="nav-mobile-cta" href="#setup-section" data-nav-target="setup-section">立即开始</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section class="home-section" id="home-section">
+            <header class="game-header">
+                <div class="project-badge-row">
+                    <span class="owner-badge">Emma</span>
+                    <span class="project-tag">PROJECT 02</span>
+                </div>
+                <h1>Fungi Simulator 真菌猎手：智能科普对抗系统</h1>
+                <p class="home-lead">把寄生真菌与昆虫宿主的博弈，做成可玩的科普小游戏。选择角色、部署孢子、触发感染，并用 AI 解释背后的生物学过程。</p>
+                <div class="header-divider"></div>
+                <div class="home-actions">
+                    <a class="home-primary-btn" href="#setup-section" data-nav-target="setup-section">开始游戏</a>
+                    <button type="button" class="home-demo-btn" id="start-auto-demo-home-btn" onclick="startAutoDemo()">▶ AI 对 AI 自动演示</button>
+                    <a class="home-secondary-btn" href="#rag-qa-section" data-nav-target="rag-qa-section">试试知识问答</a>
+                </div>
+            </header>
+
+        </section>
+
+        <section class="setup-section" id="setup-section">
+            <article class="info-card card-mvp">
+                <h2 class="section-title">游戏配置</h2>
+                <div class="editor-form-grid">
+                    <div class="form-group">
+                        <label for="player-side">角色</label>
+                        <select id="player-side" onchange="onSideChange(this.value)">
+                            <option value="fungus">真菌方</option>
+                            <option value="host">宿主方</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="host-type">宿主类型</label>
+                        <select id="host-type" onchange="onHostChange(this.value)">
+                            <option value="camponotus">木蚁 (Camponotus)</option>
+                            <option value="ponerine">猛蚁 (Ponerine)</option>
+                            <option value="atta">切叶蚁 (Atta)</option>
+                            <option value="ghost_moth">鬼天蛾幼虫 (彩蛋)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="environment-type">环境类型</label>
+                        <select id="environment-type">
+                            <option value="rainforest">热带雨林</option>
+                            <option value="jungle">丛林</option>
+                            <option value="dry_forest">热带季雨林</option>
+                            <option value="alpine_meadow" id="alpine-option" style="display: none;">高山草甸（彩蛋）</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fungus-type">真菌类型</label>
+                        <select id="fungus-type">
+                            <option value="unilateralis">O. unilateralis</option>
+                            <option value="kimflemingiae">O. kimflemingiae</option>
+                            <option value="sinensis">O. sinensis (冬虫夏草)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group start-btn-wrap setup-actions">
+                    <button id="start-game-btn" onclick="startGame()">开始游戏</button>
+                    <button type="button" id="start-auto-demo-setup-btn" class="demo-setup-btn" onclick="startAutoDemo()">▶ AI 对 AI 自动演示</button>
+                </div>
+            </article>
+        </section>
+
+        <div id="science-fact" class="science-fact hidden"></div>
+
+        <section class="notes-section rag-qa-section" id="rag-qa-section">
+            <div class="rag-qa-heading-row">
+                <h3>知识问答</h3>
+                <details class="rag-example-panel">
+                    <summary>测试问题</summary>
+                    <div class="rag-example-list">
+                        <button type="button" class="rag-example-btn" onclick="useRagExampleQuestion('What is the death grip?', true)">What is the death grip?</button>
+                        <button type="button" class="rag-example-btn" onclick="useRagExampleQuestion('真菌如何操控宿主行为？', true)">真菌如何操控宿主行为？</button>
+                        <button type="button" class="rag-example-btn" onclick="useRagExampleQuestion('Ophiocordyceps unilateralis infects which host?', true)">Ophiocordyceps unilateralis infects which host?</button>
+                        <button type="button" class="rag-example-btn" onclick="useRagExampleQuestion('Why does humidity matter for spore dispersal?', true)">Why does humidity matter for spore dispersal?</button>
+                        <button type="button" class="rag-example-btn" onclick="useRagExampleQuestion('感染阶段有哪些关键步骤？', true)">感染阶段有哪些关键步骤？</button>
+                    </div>
+                </details>
+            </div>
+            <div class="rag-qa-form">
+                <textarea id="rag-question-input" placeholder="例如：What is the death grip? / 真菌如何操控宿主行为？"></textarea>
+                <div class="rag-qa-actions">
+                    <button id="rag-ask-btn" onclick="askRagQuestion()">提问</button>
+                    <button onclick="checkRagHealth()">检查 RAG 状态</button>
+                </div>
+            </div>
+            <div id="rag-answer-panel" class="ai-commentary-panel hidden">
+                <div class="ai-commentary-title">RAG 回答与证据</div>
+                <div id="rag-answer-meta" class="ai-commentary-meta"></div>
+                <div id="rag-answer-content" class="ai-commentary-content"></div>
+            </div>
+        </section>
+
+        <section class="game-section hidden" id="game-section">
+            <div class="game-play-layout">
+                <div class="map-container" id="map-container">
+                    <div class="map-layer" id="layer-2" data-layer="2">
+                        <div class="layer-label">🌲 树冠层 (Layer 2)</div>
+                        <div class="grid"></div>
+                    </div>
+                    <div class="map-layer" id="layer-1" data-layer="1">
+                        <div class="layer-label">🌿 植被层 (Layer 1)</div>
+                        <div class="grid"></div>
+                    </div>
+                    <div class="map-layer" id="layer-0" data-layer="0">
+                        <div class="layer-label">🌍 地面层 (Layer 0)</div>
+                        <div class="grid"></div>
+                    </div>
+                </div>
+
+                <aside class="game-side-panel">
+                    <div class="game-status">
+                        <div id="current-phase">【真菌方回合】部署孢子</div>
+                        <div id="infection-stage" class="hidden">感染阶段: <span id="stage-number">1</span>/8</div>
+                        <div id="timer-display" class="hidden">剩余时间: <span id="timer">60</span>秒</div>
+                        <div id="survival-counter" class="hidden">
+                            <div>已生存: <span id="survival-days">0.0</span>/15天</div>
+                            <div>剩余生命: <span id="health-days">0.0</span>天</div>
+                            <div id="real-time-counter" class="real-time-counter hidden">(距离胜利: <span id="real-time-display">7分30秒</span>)</div>
+                        </div>
+                        <div class="side-switch">
+                            <button id="switch-side-btn" onclick="switchSides()" class="hidden">🔄 切换角色</button>
+                        </div>
+                    </div>
+
+                    <div class="control-panel">
+                        <div id="fungus-controls" class="controls">
+                            <button onclick="generateAISpores()">🤖 AI 生成策略</button>
+                            <button onclick="randomSporeDeployment()">🎲 随机布阵</button>
+                            <button onclick="confirmSporeDeployment()">✅ 确认部署</button>
+                            <div>已部署孢子: <span id="spore-count">0</span>/10</div>
+                        </div>
+
+                        <div id="host-controls" class="controls hidden">
+                            <div id="movement-controls">
+                                <div class="layer-controls">
+                                    <button onclick="changeLayer(-1)">↓ 下层</button>
+                                    <span id="current-layer">地面层</span>
+                                    <button onclick="changeLayer(1)">↑ 上层</button>
+                                </div>
+                                <div class="direction-controls">
+                                    <button onclick="moveHost('up')">↑</button>
+                                    <button onclick="moveHost('left')">←</button>
+                                    <button onclick="moveHost('right')">→</button>
+                                    <button onclick="moveHost('down')">↓</button>
+                                </div>
+                                <div>当前步数: <span id="step-count">0</span>/15</div>
+                                <div>能量: <span id="energy-level">0</span></div>
+                            </div>
+                        </div>
+
+                        <div id="infection-controls" class="controls hidden">
+                            <button onclick="pauseSimulation()">⏸️ 暂停</button>
+                            <button onclick="resumeSimulation()">▶️ 继续</button>
+                            <button id="infection-speed-btn" class="hidden" onclick="speedUpSimulation()">⏩ 2倍速</button>
+                            <button id="ai-commentary-btn" onclick="generateAICommentary()">🧠 局面解说</button>
+                            <button id="stage-guide-btn" onclick="toggleStageGuide()">📚 阶段详解</button>
+
+                            <div id="stage-guide-panel" class="ai-commentary-panel hidden">
+                                <div class="ai-commentary-title">感染阶段详细介绍</div>
+                                <div id="stage-guide-content" class="ai-commentary-content"></div>
+                            </div>
+
+                            <div id="ai-commentary-panel" class="ai-commentary-panel hidden">
+                                <div class="ai-commentary-title">AI 局面分析与胜负预测</div>
+                                <div id="ai-commentary-meta" class="ai-commentary-meta"></div>
+                                <div id="ai-commentary-content" class="ai-commentary-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p id="loading-text">AI正在生成孢子部署策略...</p>
+            </div>
+        </div>
+
+        <div id="auto-demo-banner" class="auto-demo-banner hidden" role="status" aria-live="polite">
+            <div class="auto-demo-banner-inner">
+                <span class="auto-demo-badge">AI VS AI</span>
+                <span id="auto-demo-status">演示准备中…</span>
+                <button type="button" id="auto-demo-speed-btn" class="auto-demo-speed-btn" onclick="speedUpSimulation()">2倍速</button>
+                <button type="button" id="stop-auto-demo-btn" class="auto-demo-stop-btn" onclick="stopAutoDemo()">停止演示</button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="result-screen hidden">
+            <div class="result-content">
+                <h2 id="result-title">🏆 胜负判定</h2>
+                <p id="result-message"></p>
+                <div id="result-stats"></div>
+                <div id="result-science-facts" class="result-science-facts hidden"></div>
+                <div class="result-buttons">
+                    <button onclick="restartGame()">再来一局</button>
+                    <button onclick="showScienceFacts()">查看科学事实</button>
+                    <button onclick="returnToSetup()">返回主菜单</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="host-indicator" class="host-indicator hidden"></div>
+        <div id="nest-indicator" class="nest-indicator hidden"></div>
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
