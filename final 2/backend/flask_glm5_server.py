@@ -283,16 +283,31 @@ def _build_evidence_only_answer(retrieved: List[Dict[str, Any]], reason: str = "
     if not retrieved:
         return "没有检索到相关知识片段，当前无法基于知识库回答这个问题。"
 
-    top = retrieved[0]
-    title = top.get("metadata", {}).get("title", "最相关知识片段")
     prefix = "当前先展示检索到的最相关证据。"
     if reason:
         prefix = f"{prefix}（{reason}）"
-    return (
-        f"{prefix}\n"
-        f"证据标题：{title}\n"
-        f"证据内容：{top.get('document', '')}"
+
+    lines = [
+        prefix,
+        "",
+        "## 核心结论",
+        "知识库中已有相关证据，但当前无法调用模型综合生成；下面按检索结果整理主要依据。",
+        "",
+        "## 证据要点",
+    ]
+    for index, item in enumerate(retrieved[:5], start=1):
+        title = item.get("metadata", {}).get("title", "相关知识片段")
+        document = item.get("document", "").strip()
+        lines.append(f"{index}. {title}：{document}")
+
+    lines.extend(
+        [
+            "",
+            "## 使用提示",
+            "如果需要更完整的机制解释，请确认 GLM-5 服务可用后重新提问。",
+        ]
     )
+    return "\n".join(lines)
 
 
 def _call_glm(messages: List[Dict[str, str]], model: str, temperature: float = 0.4, max_tokens: int = 1200) -> Dict[str, Any]:
@@ -372,7 +387,7 @@ def rag_health() -> Any:
 def rag_ask() -> Any:
     payload = request.get_json(silent=True) or {}
     question = (payload.get("question") or "").strip()
-    top_k = int(payload.get("top_k", 3))
+    top_k = int(payload.get("top_k", 5))
     if not question:
         return jsonify({"error": "invalid_input", "message": "Need question"}), 400
 
@@ -421,8 +436,12 @@ def rag_ask() -> Any:
     if retrieved:
         prompt = (
             "你是一个生物学课堂助手。请只基于给定检索证据回答用户关于 fungi 和 host 的问题。"
-            "回答要求：中文、准确、简洁、适合课堂解释；如果证据不足，要明确说证据不足；"
-            "不要编造检索结果之外的事实。\n\n"
+            "回答要求：中文、准确、内容充实、适合课堂讲解；如果证据不足，要明确说证据不足；"
+            "不要编造检索结果之外的事实，也不要引用未出现在证据中的论文或数据。"
+            "请用清晰小标题和项目符号组织回答，尽量包含这些部分："
+            "1）一句话结论；2）关键机制或过程；3）检索证据如何支持这个结论；"
+            "4）容易混淆的点或边界条件；5）和模拟器/课堂讨论的关联。"
+            "如果某一部分证据不足，可以写“证据不足，暂不展开”。\n\n"
             f"【用户问题】\n{question}\n\n"
             f"【检索证据】\n{chr(10).join(context_lines)}\n"
         )
@@ -431,7 +450,7 @@ def rag_ask() -> Any:
                 messages=[{"role": "user", "content": prompt}],
                 model=DEFAULT_MODEL,
                 temperature=0.2,
-                max_tokens=900,
+                max_tokens=1600,
             )
             answer = raw.get("choices", [{}])[0].get("message", {}).get("content", "") or ""
         except Exception as exc:

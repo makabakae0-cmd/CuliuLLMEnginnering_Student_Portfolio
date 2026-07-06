@@ -44,14 +44,92 @@
       "source_id": "bmc_ecology_behavioral_mechanisms",
       "title": "Behavioral mechanisms and morphological symptoms of zombie ants dying from fungal infection",
       "website": "BMC Ecology / PubMed / PMC",
-      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3118224/",
+      "url": "https://doi.org/10.1186/1472-6785-11-13",
       "type": "scientific research article",
       "used_for": [
         "death grip",
         "convulsions",
         "random walking",
         "host behavior",
-        "simulation behavior states"
+        "simulation behavior states",
+        "graveyard patches",
+        "leaf-vein biting",
+        "mandibular muscle atrophy",
+        "lock-jaw morphology"
+      ]
+    },
+    {
+      "source_id": "ortiz_keyhani_2013_insect_cuticle",
+      "title": "Action on the Surface: Entomopathogenic Fungi versus the Insect Cuticle",
+      "website": "Insects / MDPI",
+      "url": "https://doi.org/10.3390/insects4030357",
+      "type": "scientific review article",
+      "used_for": [
+        "insect cuticle infection barrier",
+        "fungal adhesion and penetration",
+        "cuticular lipids and hydrocarbons",
+        "host structural, chemical, microbial, and behavioral defenses",
+        "biocontrol and simulation rules"
+      ]
+    },
+    {
+      "source_id": "van_roosmalen_de_bekker_2024_ophiocordyceps_mechanisms",
+      "title": "Mechanisms Underlying Ophiocordyceps Infection and Behavioral Manipulation of Ants: Unique or Ubiquitous?",
+      "website": "Annual Review of Microbiology / PubMed",
+      "url": "https://doi.org/10.1146/annurev-micro-041522-092522",
+      "type": "scientific review article",
+      "used_for": [
+        "Ophiocordyceps infection biology",
+        "behavioral manipulation of carpenter ants",
+        "parasite-secreted proteins",
+        "light-driven biological rhythms",
+        "comparison with Hypocreales and Entomophthorales",
+        "convergent evolution hypotheses"
+      ]
+    },
+    {
+      "source_id": "de_bekker_2015_gene_expression_zombie_ant_biting",
+      "title": "Gene expression during zombie ant biting behavior reflects the complexity underlying fungal parasitic behavioral manipulation",
+      "website": "BMC Genomics / PMC",
+      "url": "https://doi.org/10.1186/s12864-015-1812-x",
+      "type": "scientific research article",
+      "used_for": [
+        "mixed transcriptomics during manipulated biting",
+        "Ophiocordyceps unilateralis sensu lato genome features",
+        "candidate fungal manipulator genes",
+        "host immune, neuronal stress, chemosensory and muscle gene expression",
+        "synchronized biting and death timing",
+        "simulation rules for gene-expression-driven manipulation"
+      ]
+    },
+    {
+      "source_id": "pontoppidan_2009_graveyards_on_the_move",
+      "title": "Graveyards on the Move: The Spatio-Temporal Distribution of Dead Ophiocordyceps-Infected Ants",
+      "website": "PLoS ONE / PMC",
+      "url": "https://doi.org/10.1371/journal.pone.0004835",
+      "type": "scientific research article",
+      "used_for": [
+        "graveyard spatial distribution",
+        "spatio-temporal dynamics of infected ant cadavers",
+        "host ant avoidance of infection hotspots",
+        "canopy versus forest-floor foraging routes",
+        "environmental correlates of dead ant density",
+        "simulation ecology and map rules"
+      ]
+    },
+    {
+      "source_id": "mongkolsamrit_2012_life_cycle_host_range_temporal_variation",
+      "title": "Life cycle, host range and temporal variation of Ophiocordyceps unilateralis/Hirsutella formicarum on Formicine ants",
+      "website": "Journal of Invertebrate Pathology / PubMed",
+      "url": "https://doi.org/10.1016/j.jip.2012.08.007",
+      "type": "scientific research article",
+      "used_for": [
+        "long-term Ophiocordyceps life cycle",
+        "host range in Formicine ants",
+        "Polyrhachis and Camponotus infections in Thailand",
+        "asexual and sexual states",
+        "temporal variation over two years",
+        "simulation life-cycle and seasonality rules"
       ]
     }
   ],
@@ -691,6 +769,936 @@
       "source_ids": [
         "britannica_zombie_ant_fungus"
       ]
+    },
+    {
+      "chunk_id": "cuticle_surface_001",
+      "title": "Insect cuticle as the first battlefield",
+      "text": "The insect cuticle and epicuticle are the first battlefield between entomopathogenic fungi and insect hosts. The decisive early interaction occurs when a fungal spore contacts the insect surface; successful adhesion, germination, and penetration can lead to mycosis, while surface defenses can stop infection before the fungus reaches internal tissues. 中文总结：昆虫病原真菌感染昆虫时，最早、也可能最关键的互动发生在真菌孢子和昆虫表皮/上表皮之间。昆虫 cuticle 是真菌必须突破的第一道屏障；如果真菌成功黏附、萌发并穿透，就可能进入 mycosis；如果宿主在表面阶段阻止孢子，感染就可能失败。",
+      "tags": [
+        "insect cuticle",
+        "epicuticle",
+        "entomopathogenic fungi",
+        "surface interaction",
+        "mycosis",
+        "昆虫表皮",
+        "真菌感染"
+      ],
+      "source_ids": [
+        "ortiz_keyhani_2013_insect_cuticle"
+      ]
+    },
+    {
+      "chunk_id": "cuticle_infection_001",
+      "title": "Attachment, germination, and penetration",
+      "text": "Entomopathogenic fungi can infect insects by directly penetrating the cuticle rather than entering only through the mouth or wounds. A typical sequence is spore attachment to the hydrophobic epicuticle, germination, hyphal growth, secretion of proteases, chitinases, lipases and other hydrolytic enzymes, and mechanical penetration with structures such as penetration pegs or appressoria. 中文总结：昆虫病原真菌通常不需要从口器或伤口进入宿主，而是可以从 cuticle 表面直接侵入。感染流程可概括为：孢子附着在疏水性的上表皮，萌发形成菌丝，分泌 proteases、chitinases、lipases 等水解酶，并通过 penetration peg 或 appressorium 等结构向内穿透。宿主免疫系统往往是在真菌越过表皮后才强烈参与。",
+      "tags": [
+        "spore attachment",
+        "germination",
+        "penetration",
+        "appressorium",
+        "protease",
+        "chitinase",
+        "lipase",
+        "infection stages",
+        "孢子附着",
+        "萌发",
+        "穿透"
+      ],
+      "source_ids": [
+        "ortiz_keyhani_2013_insect_cuticle"
+      ]
+    },
+    {
+      "chunk_id": "cuticle_adhesion_001",
+      "title": "Hydrophobins and adhesins help fungal spores stick",
+      "text": "Fungal adhesion to insect cuticle involves hydrophobic surface binding and stronger attachment mechanisms. Beauveria bassiana and Metarhizium anisopliae produce hydrophobic conidia with hydrophobins that form a rodlet layer and support adhesion; the Metarhizium Mad1 adhesin is linked to insect cuticle adhesion, germination, blastospore production, and virulence, whereas Mad2 is more associated with plant surfaces. 中文总结：真菌孢子对昆虫上表皮的黏附包括较非特异的疏水吸附和后续更稳定的附着。Beauveria bassiana 和 Metarhizium anisopliae 的疏水孢子表面含 hydrophobins，帮助形成 rodlet layer、提高疏水性并增强黏附；Metarhizium 的 Mad1 adhesin 与昆虫 cuticle 黏附、萌发和毒力相关，而 Mad2 更偏向植物表面互作。",
+      "tags": [
+        "adhesion",
+        "hydrophobin",
+        "Mad1",
+        "Mad2",
+        "Beauveria bassiana",
+        "Metarhizium anisopliae",
+        "rodlet layer",
+        "黏附",
+        "疏水蛋白"
+      ],
+      "source_ids": [
+        "ortiz_keyhani_2013_insect_cuticle"
+      ]
+    },
+    {
+      "chunk_id": "cuticle_lipids_001",
+      "title": "Cuticular lipids can feed or block fungi",
+      "text": "Epicuticular waxes contain hydrocarbons, fatty acids, esters, alcohols, ketones, aldehydes and other lipids. These cuticular lipids can serve as carbon sources for Beauveria and Metarhizium and induce cytochrome P450s, catalases, lipases and esterases, but some insect lipids and aldehydes can also inhibit fungal adhesion, germination or hyphal growth. 中文总结：昆虫 epicuticle 的蜡质层含 hydrocarbons、fatty acids、esters、alcohols、ketones 和 aldehydes 等成分。这些 cuticular lipids 一方面可作为 Beauveria 或 Metarhizium 的碳源，诱导 cytochrome P450、catalases、lipase/esterases 等代谢系统；另一方面，不同昆虫的脂质和醛类也可能抑制真菌附着、萌发或菌丝生长。",
+      "tags": [
+        "cuticular lipids",
+        "hydrocarbons",
+        "fatty acids",
+        "cytochrome P450",
+        "lipase",
+        "esterase",
+        "fungal metabolism",
+        "表皮脂质",
+        "碳源",
+        "抗真菌"
+      ],
+      "source_ids": [
+        "ortiz_keyhani_2013_insect_cuticle"
+      ]
+    },
+    {
+      "chunk_id": "host_defense_cuticle_001",
+      "title": "Chemical and structural cuticle defenses",
+      "text": "Insects defend the cuticle with structural and chemical mechanisms such as antimicrobial lipids, aldehydes, benzoquinones, toxins, protease and chitinase inhibitors, antimicrobial peptides, melanization, and sclerotization. Melanin or hardened cuticle can make penetration by fungal enzymes and mechanical pressure more difficult, although outcomes vary by insect species and fungal strain. 中文总结：昆虫可通过 cuticle 的结构和化学特性抵御真菌：抗菌脂质、醛类、苯醌、毒素、蛋白酶抑制剂、chitinase/protease inhibitors、抗菌肽和 melanization 都可能降低孢子萌发或穿透成功率。melanin 或硬化组织可能使 cuticle 更难被机械压力和真菌水解酶突破，但不同昆虫和真菌组合的效果差异很大。",
+      "tags": [
+        "host defense",
+        "cuticular defense",
+        "antifungal compounds",
+        "melanization",
+        "protease inhibitor",
+        "antimicrobial peptide",
+        "sclerotization",
+        "宿主防御",
+        "黑化",
+        "抗菌肽"
+      ],
+      "source_ids": [
+        "ortiz_keyhani_2013_insect_cuticle"
+      ]
+    },
+    {
+      "chunk_id": "host_defense_behavior_001",
+      "title": "Molting, symbionts, grooming, and behavioral fever",
+      "text": "Insects also reduce fungal infection through molting, symbiotic microbes, grooming, burrowing, sunbathing, UV exposure, corpse removal, and behavioral fever. Symbionts such as Wolbachia, Streptomyces, Burkholderia, or actinobacteria may provide antifungal protection, while grooming and social hygiene can remove spores before penetration. 中文总结：除表皮化学防御外，昆虫还能用发育、共生微生物和行为来降低感染：molting 可脱去带有孢子的旧表皮；某些 Wolbachia、Streptomyces、Burkholderia 或 actinobacteria 共生体可提供抗真菌帮助；grooming、群体清洁、病体移除、burrowing、sunbathing 和 behavioral fever 可减少孢子、改变温度或利用 UV 限制真菌生长。",
+      "tags": [
+        "molting",
+        "symbionts",
+        "grooming",
+        "behavioral fever",
+        "burrowing",
+        "sunbathing",
+        "UV",
+        "social insects",
+        "蜕皮",
+        "共生菌",
+        "梳理",
+        "行为发热"
+      ],
+      "source_ids": [
+        "ortiz_keyhani_2013_insect_cuticle"
+      ]
+    },
+    {
+      "chunk_id": "coevolution_biocontrol_001",
+      "title": "Surface arms race affects virulence and biocontrol",
+      "text": "Fungal virulence and insect surface defenses are under reciprocal coevolutionary pressure. Surface interactions can affect fungal strain variation, host range, increased virulence after insect passage, and the reliability of mycoinsecticides in field biocontrol. For a simulator, infection probability can depend on humidity, temperature, cuticular lipid composition, melanization, grooming, molting, symbionts, and fungal enzyme levels. 中文总结：真菌毒力和宿主表面防御处在共同进化的拉锯中。cuticle 表面的相互作用会影响菌株差异、宿主范围、传代后毒力增强以及田间生防效果。用于 simulator 时，可把湿度、温度、cuticle lipid composition、melanization、grooming、molting、symbionts 和 fungal enzyme level 作为影响感染概率与阶段转移的变量。",
+      "tags": [
+        "coevolution",
+        "virulence",
+        "host range",
+        "biocontrol",
+        "simulation rules",
+        "infection probability",
+        "共同进化",
+        "毒力",
+        "生物防治",
+        "模拟规则"
+      ],
+      "source_ids": [
+        "ortiz_keyhani_2013_insect_cuticle"
+      ]
+    },
+    {
+      "chunk_id": "behavior_mechanism_review_001",
+      "title": "Ophiocordyceps manipulation may combine infection and behavior programs",
+      "text": "A 2024 review frames Ophiocordyceps ant manipulation as an infection strategy that increases parasite transmission rather than as simple mind control. Current hypotheses connect infection biology, secreted parasite molecules, host tissue changes, and timed behavioral shifts such as leaving the nest, climbing, and death grip. 中文总结：这篇综述把 Ophiocordyceps 对木匠蚁的行为操控理解为提高传播成功率的感染策略，而不是简单的“控制大脑”。研究假说把感染过程、寄生物分泌分子、宿主组织变化，以及离巢、攀爬、死亡紧咬等定时行为变化联系起来。",
+      "tags": [
+        "Ophiocordyceps",
+        "behavior manipulation",
+        "carpenter ants",
+        "infection biology",
+        "transmission",
+        "death grip",
+        "行为操控",
+        "木匠蚁",
+        "传播策略"
+      ],
+      "source_ids": [
+        "van_roosmalen_de_bekker_2024_ophiocordyceps_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "secreted_proteins_001",
+      "title": "Parasite-secreted proteins as candidate manipulation tools",
+      "text": "Research on Ophiocordyceps and related manipulating parasites suggests that secreted parasite proteins are likely involved in infection and host behavioral manipulation. These proteins are candidate effectors because they can interact with host tissues, alter physiology, and help the parasite coordinate infection with behavioral outcomes. 中文总结：Ophiocordyceps 及其他行为操控型寄生物的研究提示，寄生物分泌蛋白很可能参与感染和宿主行为改变。这些蛋白可被视为候选 effector，因为它们可能与宿主组织互作、改变生理状态，并帮助寄生物把感染进程和行为结果连接起来。",
+      "tags": [
+        "secreted proteins",
+        "effectors",
+        "host physiology",
+        "parasite manipulation",
+        "molecular mechanism",
+        "分泌蛋白",
+        "效应蛋白",
+        "宿主生理"
+      ],
+      "source_ids": [
+        "van_roosmalen_de_bekker_2024_ophiocordyceps_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "light_rhythm_001",
+      "title": "Light-driven rhythms may time manipulation",
+      "text": "The review highlights light-driven biological rhythms as a likely part of Ophiocordyceps infection and manipulation biology. Circadian or environmental timing cues may help synchronize parasite development with host behaviors and with transmission-friendly conditions, such as the timing of climbing or biting. 中文总结：综述强调，光驱动的生物节律可能是 Ophiocordyceps 感染和操控机制的一部分。昼夜节律或环境光线信号可能帮助真菌把自身发育、宿主行为变化和有利传播的环境条件同步起来，例如何时攀爬或咬附。",
+      "tags": [
+        "light",
+        "biological rhythms",
+        "circadian rhythm",
+        "timing",
+        "host behavior",
+        "transmission",
+        "光照",
+        "生物节律",
+        "昼夜节律",
+        "行为时机"
+      ],
+      "source_ids": [
+        "van_roosmalen_de_bekker_2024_ophiocordyceps_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "comparative_parasites_001",
+      "title": "Compare Ophiocordyceps with Hypocreales and Entomophthorales",
+      "text": "To ask whether Ophiocordyceps mechanisms are unique or widespread, the review compares it with related insect- and plant-infecting Hypocreales and with behavior-manipulating Entomophthorales. Similar outcomes across distant parasite groups may reflect convergent evolution, while similarities among close relatives may point to shared ancestral infection toolkits. 中文总结：为了回答 Ophiocordyceps 的机制是独特还是普遍存在，综述把它与较近缘的昆虫/植物感染型 Hypocreales，以及同样能操控昆虫行为的 Entomophthorales 比较。远缘类群出现相似行为结果，可能说明趋同演化；近缘类群的相似机制则可能来自共享的祖先感染工具。",
+      "tags": [
+        "Hypocreales",
+        "Entomophthorales",
+        "comparative biology",
+        "convergent evolution",
+        "plant pathogens",
+        "insect pathogens",
+        "趋同演化",
+        "比较生物学"
+      ],
+      "source_ids": [
+        "van_roosmalen_de_bekker_2024_ophiocordyceps_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "unique_or_ubiquitous_001",
+      "title": "Unique or ubiquitous mechanisms remain a research question",
+      "text": "The key question of the review is whether Ophiocordyceps infection and behavioral manipulation mechanisms are unique to this ant-fungus system or represent more general strategies that evolved repeatedly in parasites. The current evidence supports functional hypotheses rather than final answers, so future studies need to test which molecular mechanisms are specific, shared, or convergently evolved. 中文总结：这篇综述的核心问题是：Ophiocordyceps 的感染和行为操控机制是否是这个蚂蚁-真菌系统独有的，还是寄生物中多次演化出的普遍策略。目前证据更适合提出功能假说，而不是给出定论；未来研究需要区分哪些机制是特异的、共享的或趋同演化的。",
+      "tags": [
+        "unique mechanisms",
+        "ubiquitous mechanisms",
+        "functional hypotheses",
+        "future studies",
+        "convergent evolution",
+        "research question",
+        "独特机制",
+        "普遍机制",
+        "功能假说"
+      ],
+      "source_ids": [
+        "van_roosmalen_de_bekker_2024_ophiocordyceps_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "simulation_behavior_mechanism_001",
+      "title": "Simulation rules for molecular and rhythmic manipulation",
+      "text": "For a simulator, this review supports modeling infected ants with internal variables such as fungal load, secreted effector activity, light or circadian phase, and transmission readiness. Behavior changes can be triggered when infection level and timing cues align, making manipulation staged and environmentally timed rather than random. 中文总结：用于 simulator 时，可以把感染蚂蚁建模为拥有 fungal load、secreted effector activity、light/circadian phase 和 transmission readiness 等内部变量。当感染程度和光照/节律线索同时满足时，再触发离巢、攀爬、死亡紧咬等行为，使行为操控呈现分阶段、受环境时机影响的特点，而不是随机发生。",
+      "tags": [
+        "simulation rules",
+        "fungal load",
+        "effector activity",
+        "circadian phase",
+        "infection stages",
+        "AI demo",
+        "模拟规则",
+        "感染阶段",
+        "行为触发"
+      ],
+      "source_ids": [
+        "van_roosmalen_de_bekker_2024_ophiocordyceps_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "mixed_transcriptomics_001",
+      "title": "Mixed transcriptomics during zombie ant biting",
+      "text": "De Bekker et al. experimentally infected Camponotus castaneus carpenter ants with Ophiocordyceps unilateralis sensu lato and sampled ant heads during manipulated biting and shortly after death. Using mixed RNA-Seq, they measured both fungal and host gene expression in the same parasite-host interaction. 中文总结：研究者用 O. unilateralis s.l. 实验感染 C. castaneus 木匠蚁，在死亡紧咬发生时和紧咬后死亡阶段采集蚂蚁头部，进行 mixed transcriptomics，同时观察真菌和宿主在同一感染事件中的基因表达。",
+      "tags": [
+        "mixed transcriptomics",
+        "RNA-Seq",
+        "Camponotus castaneus",
+        "Ophiocordyceps unilateralis",
+        "death grip",
+        "gene expression",
+        "混合转录组",
+        "死亡紧咬",
+        "基因表达"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "synchronized_biting_001",
+      "title": "Manipulated biting and death are synchronized",
+      "text": "In the laboratory, infected ants that died 16-24 days after infection showed stereotyped manipulated biting. Live biting ants were found around 09:00, collected during manipulation at 10:00, showed reduced movement by 13:00, and appeared dead by 14:00. This supports the idea that biting and death are synchronized and may be controlled by daily timing cues. 中文总结：实验中，感染后 16-24 天死亡的蚂蚁会出现典型咬附姿势；早上约 09:00 仍活着并咬住基质，10:00 采集“操控中”样本，13:00 运动减少，14:00 基本死亡。这说明死亡紧咬和宿主死亡具有同步性，可能受日节律或环境时机影响。",
+      "tags": [
+        "synchronized biting",
+        "death timing",
+        "circadian timing",
+        "daily rhythm",
+        "infection day",
+        "behavioral manipulation",
+        "同步咬附",
+        "死亡时间",
+        "昼夜节律"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "fungal_genome_secretome_001",
+      "title": "Ophiocordyceps genome contains many unique secreted proteins",
+      "text": "The South Carolina Ophiocordyceps unilateralis s.l. genome was about 26.05 Mb with 7,831 predicted genes. About 11.4% of genes encoded putatively secreted proteins; 33% of secreted proteins and about 49% of small secreted proteins were unique to this Ophiocordyceps genome, making them strong candidate effectors for specialized manipulation. 中文总结：该研究组装的 O. unilateralis s.l. 基因组约 26.05 Mb，预测 7,831 个基因，其中约 11.4% 编码潜在分泌蛋白。分泌蛋白中约 33%、小分泌蛋白中约 49% 是该基因组独有，提示这些 SSPs 可能是专门参与行为操控的候选效应蛋白。",
+      "tags": [
+        "genome",
+        "secretome",
+        "secreted proteins",
+        "small secreted proteins",
+        "SSP",
+        "effectors",
+        "unique genes",
+        "基因组",
+        "分泌组",
+        "小分泌蛋白",
+        "效应蛋白"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "unique_upregulated_genes_001",
+      "title": "Most genes up during biting are not conserved in other insect fungi",
+      "text": "During manipulated biting, many Ophiocordyceps genes that were up-regulated and then down-regulated after death were not conserved in other Hypocrealean insect pathogens. The paper reports that about 80-82% of genes specifically associated with manipulated biting were absent from non-manipulating insect-infecting fungi, suggesting a specialized gene set for death-grip behavior. 中文总结：死亡紧咬期间上调、紧咬后又下调的许多真菌基因，在其他 Hypocreales 昆虫病原真菌中并不保守。论文指出，与操控咬附相关的约 80-82% 基因不见于非操控型昆虫病原真菌，说明 O. unilateralis 可能使用一套较独特的基因组合来建立死亡紧咬。",
+      "tags": [
+        "up-regulated genes",
+        "Hypocreales",
+        "unique genes",
+        "death grip",
+        "comparative genomics",
+        "specialized manipulation",
+        "上调基因",
+        "特异基因",
+        "比较基因组"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "fungal_candidate_manipulators_001",
+      "title": "Candidate fungal manipulators include alkaloids, PTPs, CYPs and SSPs",
+      "text": "Candidate Ophiocordyceps manipulators up-regulated during biting include genes linked to ergot-like alkaloids, indole diterpene alkaloids such as penitrem-like compounds, NRPSs, PKSs, cytochrome P450s, tyrosinases, protein-tyrosine phosphatases, sphingomyelinase, lipocalin-like proteins, kynurenine pathway enzymes, and many SSPs with unknown functions. These could affect neurotransmission, muscle activity, inflammation, redox state, or host cell regulation. 中文总结：死亡紧咬期间上调的候选真菌操控因子包括麦角样生物碱、indole diterpene / penitrem 类代谢、NRPS、PKS、CYP、tyrosinase、protein-tyrosine phosphatase、sphingomyelinase、lipocalin 样蛋白、kynurenine 通路酶以及大量功能未知 SSPs。这些因子可能影响神经递质、肌肉活动、炎症、氧化还原状态或宿主细胞调控。",
+      "tags": [
+        "alkaloids",
+        "ergot alkaloids",
+        "penitrem",
+        "NRPS",
+        "PKS",
+        "cytochrome P450",
+        "PTP",
+        "sphingomyelinase",
+        "kynurenine",
+        "neuromodulator",
+        "生物碱",
+        "神经调节",
+        "候选操控因子"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "enterotoxin_chemosensing_001",
+      "title": "Enterotoxins may impair ant chemical communication",
+      "text": "Ophiocordyceps unilateralis s.l. had an unusual expansion of bacterial-like enterotoxin genes, with dynamic expression during and after biting. Because social insects rely heavily on chemical signals, these secreted toxins may help disrupt chemosensory communication; infected ants also showed down-regulation of odorant and gustatory receptors and binding proteins. 中文总结：O. unilateralis s.l. 基因组中有异常扩张的细菌样 enterotoxin 基因，并在咬附前后动态表达。由于社会性昆虫高度依赖化学信号，这些分泌毒素可能削弱宿主化学通讯；同时，感染蚂蚁中气味和味觉感知相关受体及结合蛋白也出现下调。",
+      "tags": [
+        "enterotoxin",
+        "chemosensory communication",
+        "odorant receptor",
+        "gustatory perception",
+        "social insects",
+        "chemical signals",
+        "肠毒素",
+        "化学通讯",
+        "嗅觉受体",
+        "社会性昆虫"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "host_immune_stress_001",
+      "title": "Manipulated ants show suppressed immune and stress genes",
+      "text": "During manipulated biting, many host immune and stress response genes were down-regulated in ant heads, including pathogen recognition genes, prophenoloxidase, antimicrobial peptides such as defensins, and oxidoreductase-related genes. This suggests Ophiocordyceps may suppress host immune and neuronal stress responses long enough to complete manipulation before killing the host. 中文总结：在死亡紧咬期间，蚂蚁头部许多免疫和压力反应基因下调，包括病原识别、prophenoloxidase、defensin 等抗菌肽以及氧化还原相关基因。这提示 Ophiocordyceps 可能压制宿主免疫和神经压力反应，使宿主在死亡前保持可被操控的状态。",
+      "tags": [
+        "host immune response",
+        "stress response",
+        "defensin",
+        "prophenoloxidase",
+        "oxidoreductase",
+        "immune suppression",
+        "宿主免疫",
+        "压力反应",
+        "免疫抑制"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "host_neural_muscle_targets_001",
+      "title": "Host neural, clock, sensory and muscle pathways are candidate targets",
+      "text": "Host genes altered during biting point to several possible manipulation targets: octopamine receptor and dopamine biosynthesis genes may affect locomotion and mandible movement; period and cycle clock genes may alter daily timing; odorant receptors and odorant-binding proteins were down-regulated; collagen and muscle LIM genes were down-regulated, consistent with mandibular muscle atrophy and lock-jaw fixation. 中文总结：咬附期间改变的宿主基因指向多个可能被操控的通路：octopamine receptor 和 dopamine 合成相关基因可能影响运动和下颚动作；period 与 cycle 等 clock genes 可能改变日节律；气味受体和气味结合蛋白下调；collagen 与 muscle LIM 基因下调，与下颚肌肉萎缩和 lock-jaw 固定相吻合。",
+      "tags": [
+        "octopamine",
+        "dopamine",
+        "clock genes",
+        "period",
+        "cycle",
+        "odorant receptor",
+        "muscle atrophy",
+        "lock-jaw",
+        "mandible",
+        "多巴胺",
+        "时钟基因",
+        "肌肉萎缩",
+        "锁颚"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "parasitic_to_saprophytic_shift_001",
+      "title": "Gene expression shifts after manipulation from parasitic to saprophytic growth",
+      "text": "After biting and presumed host death, Ophiocordyceps gene expression shifted: carbohydrate processing genes increased, while many pathogenesis, secondary metabolism, oxidation-reduction, and secreted protein genes decreased. This suggests a transition from manipulating and maintaining a living host to consuming dead host tissue and preparing for external growth and reproduction. 中文总结：咬附完成并宿主死亡后，真菌表达模式发生转换：糖类加工相关基因上升，而许多致病性、次级代谢、氧化还原和分泌蛋白相关基因下降。这说明真菌从“操控并维持活宿主”的寄生阶段，转向“消耗死亡宿主组织并准备外部生长繁殖”的腐生阶段。",
+      "tags": [
+        "parasitic growth",
+        "saprophytic growth",
+        "carbohydrate metabolism",
+        "host death",
+        "secondary metabolism",
+        "life cycle transition",
+        "寄生阶段",
+        "腐生阶段",
+        "生命周期转换"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "simulation_gene_expression_001",
+      "title": "Simulation rules from zombie ant gene expression",
+      "text": "For a simulator, this study supports using hidden infection variables such as fungal biomass in the head, manipulation gene activity, secreted effector level, host immune suppression, sensory disruption, clock phase, mandible muscle damage, and saprophytic transition. Death grip should occur only when multiple conditions align, reflecting the complex and precise nature of fungal behavioral manipulation. 中文总结：用于 simulator 时，可把蚂蚁感染状态建模为多个隐藏变量：头部真菌量、操控基因活性、分泌效应蛋白水平、宿主免疫压制、感觉干扰、节律阶段、下颚肌肉损伤和腐生阶段转换。死亡紧咬应在多个条件同时满足时触发，以体现真菌行为操控的复杂性和精确性。",
+      "tags": [
+        "simulation rules",
+        "hidden variables",
+        "fungal biomass",
+        "effector level",
+        "immune suppression",
+        "sensory disruption",
+        "clock phase",
+        "death grip trigger",
+        "模拟规则",
+        "隐藏变量",
+        "死亡紧咬触发"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "gene_expression_biting_qa_001",
+      "title": "FAQ: gene expression changes during death grip",
+      "text": "死亡紧咬期间 Ophiocordyceps 和蚂蚁有哪些基因表达变化？During zombie ant death-grip biting, fungal Ophiocordyceps genes for secreted proteins, SSP effectors, alkaloid and secondary metabolite biosynthesis, cytochrome P450s, protein-tyrosine phosphatases, enterotoxins, and redox-related processes are up-regulated. In the ant host, immune and stress genes, odorant and gustatory perception genes, and muscle integrity genes tend to be down-regulated, while candidate neural, dopamine/octopamine, PTP, apoptosis, and clock genes such as period and cycle can be altered. 中文总结：死亡紧咬期间，真菌侧上调分泌蛋白、小分泌效应蛋白、次级代谢/生物碱、CYP、PTP、enterotoxin 和氧化还原相关基因；蚂蚁侧则出现免疫与压力反应下降、嗅觉/味觉通讯削弱、肌肉结构基因下降，同时神经递质、PTP、凋亡和生物钟相关基因发生变化。",
+      "tags": [
+        "death grip",
+        "gene expression",
+        "Ophiocordyceps",
+        "ant host",
+        "mixed transcriptomics",
+        "immune suppression",
+        "chemosensory genes",
+        "clock genes",
+        "死亡紧咬",
+        "基因表达变化",
+        "蚂蚁",
+        "真菌"
+      ],
+      "source_ids": [
+        "de_bekker_2015_gene_expression_zombie_ant_biting"
+      ]
+    },
+    {
+      "chunk_id": "field_graveyard_001",
+      "title": "Infected ants die in rainforest graveyard patches",
+      "text": "Hughes et al. studied Ophiocordyceps unilateralis s.l. infecting Camponotus leonardi in a Thai rainforest. Infected ants left canopy nests and died in concentrated graveyard patches on understory sapling leaves, often around 25 cm above the soil, where humidity and other microclimate conditions favored fungal development and transmission. 中文总结：Hughes 等人在泰国雨林研究 O. unilateralis s.l. 与 C. leonardi 的关系，发现感染蚂蚁会从树冠巢穴下到林下幼树叶片，并集中死在“graveyard”斑块中，常见位置约离地 25 cm，这类微环境更适合真菌发育和传播。",
+      "tags": [
+        "graveyard",
+        "Thai rainforest",
+        "Camponotus leonardi",
+        "understory",
+        "microclimate",
+        "leaf",
+        "transmission",
+        "墓地斑块",
+        "雨林",
+        "微环境"
+      ],
+      "source_ids": [
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "zombie_ant_behavior_sequence_001",
+      "title": "Zombie ants show wandering, convulsions, falling and climbing",
+      "text": "Before death grip, infected ants displayed stereotyped zombie-like behaviors: random rather than directional walking, repeated convulsions, falling from vegetation, inability to return to the canopy, and eventual movement to understory leaves. These behaviors can be interpreted as parasite adaptations that reposition the host into a better transmission site. 中文总结：死亡紧咬前，感染蚂蚁会表现出刻板的“僵尸式”行为：随机游走而不是定向行走、反复抽搐、从植被上跌落、无法回到树冠，最后来到林下叶片。这些行为可被理解为寄生真菌把宿主重新定位到更适合传播地点的适应性操控。",
+      "tags": [
+        "random walking",
+        "convulsions",
+        "falling",
+        "climbing",
+        "zombie behavior",
+        "host repositioning",
+        "behavior sequence",
+        "随机游走",
+        "抽搐",
+        "跌落",
+        "攀爬"
+      ],
+      "source_ids": [
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "solar_noon_death_grip_001",
+      "title": "Death grip transition is abrupt and synchronized around solar noon",
+      "text": "The transition from erratic wandering to death grip was abrupt and synchronized around solar noon in the Thai rainforest system. Infected ants bit into the abaxial underside vein of leaves before dying, placing the cadaver in a position that supports later fungal fruiting and spore release. 中文总结：在泰国雨林系统中，感染蚂蚁从混乱游走转入死亡紧咬的过程很突然，并且同步发生在太阳正午前后。蚂蚁会咬住叶片背面的叶脉后死亡，使尸体固定在有利于真菌后续长出子实体和释放孢子的位置。",
+      "tags": [
+        "solar noon",
+        "synchronized behavior",
+        "death grip",
+        "leaf vein",
+        "abaxial leaf vein",
+        "fruiting body",
+        "spore release",
+        "太阳正午",
+        "同步",
+        "死亡紧咬",
+        "叶脉"
+      ],
+      "source_ids": [
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "lock_jaw_morphology_001",
+      "title": "Deep mandible penetration and muscle atrophy create lock-jaw",
+      "text": "Death grip is not only a behavior but also a morphological outcome. The ant mandibles penetrate deeply into leaf vein tissue, while mandibular muscles show extensive atrophy. This lock-jaw keeps the ant attached to the leaf after death, preventing the cadaver from falling before fungal reproduction. 中文总结：死亡紧咬不仅是行为，也是形态结果。蚂蚁下颚会深深插入叶脉组织，同时下颚肌肉出现明显萎缩，形成 lock-jaw。这样即使宿主死亡，尸体仍能牢牢固定在叶片上，不会在真菌繁殖前掉落。",
+      "tags": [
+        "lock-jaw",
+        "mandible",
+        "leaf vein",
+        "muscle atrophy",
+        "morphology",
+        "death grip",
+        "cadaver fixation",
+        "锁颚",
+        "下颚",
+        "肌肉萎缩",
+        "形态变化"
+      ],
+      "source_ids": [
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "head_parasite_cells_001",
+      "title": "Fungal cells inside the head likely drive mandibular muscle atrophy",
+      "text": "Histological observations showed a high density of single-celled fungal stages inside the head capsule of dying ants. These fungal cells are likely linked to mandibular muscle atrophy and the mechanical expression of death grip, showing that manipulation requires coordinated changes in both behavior and internal morphology. 中文总结：组织学结果显示，濒死蚂蚁头壳内有高密度的单细胞真菌阶段。这些真菌细胞可能与下颚肌肉萎缩和死亡紧咬的机械实现有关，说明行为操控需要宿主行为和内部形态变化协同发生。",
+      "tags": [
+        "histology",
+        "head capsule",
+        "fungal cells",
+        "single-celled stages",
+        "mandibular muscle",
+        "muscle atrophy",
+        "morphological symptoms",
+        "组织学",
+        "头壳",
+        "真菌细胞",
+        "下颚肌肉"
+      ],
+      "source_ids": [
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "extended_phenotype_001",
+      "title": "Death grip is an extended phenotype of the parasite",
+      "text": "The study presents zombie ant death grip as an extended phenotype: parasite genes and development produce changes in host behavior and morphology that benefit parasite transmission. The phenotype is complex because it requires host movement changes, synchronized timing, precise biting location, mandible penetration, and postmortem attachment. 中文总结：这项研究把僵尸蚂蚁死亡紧咬视为寄生物的 extended phenotype：寄生真菌通过影响宿主行为和形态，产生有利于自身传播的外在表现。这个表型很复杂，因为它需要运动改变、同步时机、精确咬附位置、下颚刺入和死后固定共同配合。",
+      "tags": [
+        "extended phenotype",
+        "parasite manipulation",
+        "host morphology",
+        "host behavior",
+        "transmission",
+        "complex phenotype",
+        "延伸表型",
+        "寄生操控",
+        "宿主形态",
+        "宿主行为"
+      ],
+      "source_ids": [
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "simulation_death_grip_morphology_001",
+      "title": "Simulation rules for death grip behavior and morphology",
+      "text": "For a simulator, this paper supports modeling death grip as a final event that requires several aligned conditions: infection stage high enough, ant displaced from canopy to understory, erratic walking and convulsions completed, time near solar noon or a species-specific cue, suitable leaf vein substrate, mandibular muscle damage, and lock-jaw fixation after death. 中文总结：用于 simulator 时，可把死亡紧咬建模为多个条件同时满足的最终事件：感染阶段足够高、宿主从树冠转移到林下、经历随机游走和抽搐、接近太阳正午或物种特异时机、附近有合适叶脉基质、下颚肌肉损伤，并在死亡后形成 lock-jaw 固定。",
+      "tags": [
+        "simulation rules",
+        "death grip trigger",
+        "infection stage",
+        "convulsions",
+        "solar noon",
+        "leaf vein",
+        "lock-jaw",
+        "muscle damage",
+        "模拟规则",
+        "死亡紧咬触发",
+        "感染阶段"
+      ],
+      "source_ids": [
+        "bmc_ecology_behavioral_mechanisms"
+      ]
+    },
+    {
+      "chunk_id": "graveyards_spatial_distribution_001",
+      "title": "Ophiocordyceps-killed ants form dense graveyard patches",
+      "text": "Pontoppidan et al. mapped every leaf in 1,360 m2 of primary rainforest in Southern Thailand and found that dead Ophiocordyceps-infected ants were not randomly distributed. They formed high-density graveyard patches, with local densities up to 26 dead ants per square meter, embedded in larger areas with no or very few infected cadavers. 中文总结：研究者在泰国南部原始雨林中检查了 1,360 m2 范围内的每片叶子，发现被 Ophiocordyceps 杀死的蚂蚁不是随机分布，而是形成高密度 graveyard 斑块，局部密度最高可达每平方米 26 只死蚂蚁，周围大片区域则几乎没有感染尸体。",
+      "tags": [
+        "graveyards",
+        "spatial distribution",
+        "patches",
+        "dead ants",
+        "Ophiocordyceps",
+        "density",
+        "Thailand rainforest",
+        "墓地斑块",
+        "空间分布",
+        "高密度"
+      ],
+      "source_ids": [
+        "pontoppidan_2009_graveyards_on_the_move"
+      ]
+    },
+    {
+      "chunk_id": "graveyard_environment_001",
+      "title": "Graveyard density correlates with microclimate at some scales",
+      "text": "The density of dead infected ants correlated with temperature, humidity, and vegetation cover at some spatial scales, especially within graveyards at an intermediate scale, but not consistently at every scale. This suggests that microclimate matters for Ophiocordyceps development and cadaver persistence, while graveyard placement also depends on host behavior and landscape structure. 中文总结：死蚂蚁密度在某些空间尺度上与温度、湿度和植被覆盖相关，尤其是在 graveyard 内的中等尺度上更明显，但这种关系并非所有尺度都成立。这说明微气候会影响真菌发育和尸体保存，但 graveyard 的位置还受到宿主行为和森林空间结构影响。",
+      "tags": [
+        "microclimate",
+        "humidity",
+        "temperature",
+        "vegetation cover",
+        "spatial scale",
+        "cadaver persistence",
+        "微气候",
+        "湿度",
+        "温度",
+        "植被覆盖"
+      ],
+      "source_ids": [
+        "pontoppidan_2009_graveyards_on_the_move"
+      ]
+    },
+    {
+      "chunk_id": "graveyard_host_avoidance_001",
+      "title": "Live host ants are nearly absent from graveyards",
+      "text": "Inside graveyards the researchers found 2,243 dead infected ants but only two live Camponotus leonardi workers, even after intensive searching. This striking contrast supports the hypothesis that foraging host ants actively avoid graveyards or rarely enter the forest-floor zones where infection risk is high. 中文总结：研究者在 graveyard 中发现 2,243 只被感染杀死的蚂蚁，却只找到 2 只活的主要宿主 C. leonardi。这个强烈反差支持一个假说：觅食蚂蚁会主动回避 graveyard，或很少进入感染风险高的林地表层区域。",
+      "tags": [
+        "host avoidance",
+        "Camponotus leonardi",
+        "live ants",
+        "graveyards",
+        "infection risk",
+        "foraging behavior",
+        "宿主回避",
+        "活蚂蚁",
+        "感染风险",
+        "觅食行为"
+      ],
+      "source_ids": [
+        "pontoppidan_2009_graveyards_on_the_move"
+      ]
+    },
+    {
+      "chunk_id": "canopy_trails_infection_risk_001",
+      "title": "Canopy trails may reduce forest-floor infection risk",
+      "text": "Camponotus leonardi nests were found high in the canopy, with aerial trails spanning tree crowns. Trails only occasionally descended to the forest floor, where Ophiocordyceps spores can infect ants. The authors hypothesize that ants may use canopy routes as a defense and descend only when canopy gaps make ground access necessary, trading food access against infection risk. 中文总结：C. leonardi 的巢位于高树冠，觅食路线主要是树冠间的空中通道，只有偶尔下降到林地表层，而那里正是 Ophiocordyceps 孢子容易感染蚂蚁的区域。作者提出假说：树冠路线可能是一种防御，蚂蚁只有在树冠断裂、必须走地面时才下降，并在食物收益和感染风险之间权衡。",
+      "tags": [
+        "canopy trails",
+        "forest floor",
+        "infection risk",
+        "foraging routes",
+        "canopy gaps",
+        "trade-off",
+        "tree crowns",
+        "树冠通道",
+        "林地表层",
+        "风险权衡"
+      ],
+      "source_ids": [
+        "pontoppidan_2009_graveyards_on_the_move"
+      ]
+    },
+    {
+      "chunk_id": "graveyards_temporal_dynamics_001",
+      "title": "Graveyards persist but high-density patches move over time",
+      "text": "Graveyards were not merely short-lived fungal outbreaks: they persisted in the same 100 m2 areas after one year. However, high-density and low-density areas within graveyards changed substantially, with some patches shrinking, others growing, and new patches appearing. 中文总结：graveyard 并不是短暂出现的真菌暴发，一年后仍存在于相同的 100 m2 区域中。但 graveyard 内部的高密度和低密度区域会明显变化：有些斑块缩小，有些扩大，也会出现新的高密度斑块。",
+      "tags": [
+        "temporal dynamics",
+        "graveyard persistence",
+        "patch movement",
+        "one year",
+        "high-density patches",
+        "low-density patches",
+        "时间动态",
+        "斑块移动",
+        "持续存在"
+      ],
+      "source_ids": [
+        "pontoppidan_2009_graveyards_on_the_move"
+      ]
+    },
+    {
+      "chunk_id": "extended_phenotype_spatial_ecology_001",
+      "title": "Manipulated death sites are ecological variables",
+      "text": "The paper argues that parasite extended phenotypes are ecological variables in space and time. Because Ophiocordyceps manipulation determines where infected ants die, the spatial distribution of cadavers can structure host exposure, foraging decisions, parasite transmission, and potentially other species that use the same microhabitat. 中文总结：论文强调，寄生物的 extended phenotype 也是时空生态变量。由于 Ophiocordyceps 操控宿主死亡地点，尸体的空间分布会影响宿主暴露风险、觅食决策、寄生物传播，甚至可能影响同一微生境中的其他物种。",
+      "tags": [
+        "extended phenotype",
+        "spatial ecology",
+        "parasite transmission",
+        "host population",
+        "ecological variable",
+        "cadaver distribution",
+        "延伸表型",
+        "空间生态",
+        "寄生传播",
+        "宿主种群"
+      ],
+      "source_ids": [
+        "pontoppidan_2009_graveyards_on_the_move"
+      ]
+    },
+    {
+      "chunk_id": "simulation_graveyard_ecology_001",
+      "title": "Simulation rules for graveyard ecology",
+      "text": "For a simulator, this study supports adding persistent but moving graveyard zones to the map. Graveyards should raise infection risk on understory or forest-floor routes, especially in humid and vegetated patches; host AI can prefer canopy routes and avoid known graveyards unless a resource reward or blocked canopy path makes risky descent worthwhile. 中文总结：用于 simulator 时，可以在地图中加入“持续存在但会移动”的 graveyard 区域。graveyard 应提高林下或地表路线的感染风险，尤其在潮湿、植被丰富区域；宿主 AI 可优先选择树冠路线并回避已知 graveyard，除非资源收益很高或树冠路线被阻断，才冒险下降。",
+      "tags": [
+        "simulation rules",
+        "graveyard zones",
+        "infection risk",
+        "host AI",
+        "canopy route",
+        "risk reward",
+        "map ecology",
+        "模拟规则",
+        "墓地区域",
+        "宿主AI",
+        "风险收益"
+      ],
+      "source_ids": [
+        "pontoppidan_2009_graveyards_on_the_move"
+      ]
+    },
+    {
+      "chunk_id": "graveyard_field_methods_001",
+      "title": "Systematic leaf surveys mapped infected ant cadavers",
+      "text": "The field method was exhaustive at the leaf scale: researchers turned over and checked leaves up to 2 m high, mapped dead infected ants in 1 m2 grid cells, recorded vegetation cover, humidity and temperature near the average biting height, and repeated counts over a year. 中文总结：这项野外研究的方法是在叶片尺度上系统调查：研究者翻查 2 m 高以内的叶片，把感染死亡蚂蚁记录到 1 m2 网格中，同时记录植被覆盖、咬附高度附近的湿度和温度，并在一年内重复计数。",
+      "tags": [
+        "field methods",
+        "leaf survey",
+        "grid cells",
+        "mapping",
+        "humidity recording",
+        "temperature recording",
+        "repeated counts",
+        "野外方法",
+        "叶片调查",
+        "网格",
+        "重复计数"
+      ],
+      "source_ids": [
+        "pontoppidan_2009_graveyards_on_the_move"
+      ]
+    },
+    {
+      "chunk_id": "ophiocordyceps_long_term_life_cycle_001",
+      "title": "Long-term life cycle of Ophiocordyceps unilateralis s.l.",
+      "text": "Mongkolsamrit et al. surveyed a permanent tropical rainforest plot over two years to document the long-term life cycle of Ophiocordyceps unilateralis sensu lato / Hirsutella formicarum on formicine ants. The study emphasizes that understanding the pathogen's reproductive life span is necessary for explaining host-parasite dynamics. 中文总结：Mongkolsamrit 等人在热带雨林永久样地中进行了两年调查，用于记录 O. unilateralis s.l. / Hirsutella formicarum 在蚁亚科宿主上的长期生命周期。论文强调，了解病原体的繁殖寿命是解释宿主-寄生物动态的基础。",
+      "tags": [
+        "life cycle",
+        "long-term survey",
+        "Ophiocordyceps unilateralis",
+        "Hirsutella formicarum",
+        "formicine ants",
+        "rainforest plot",
+        "生命周期",
+        "长期调查",
+        "蚁亚科"
+      ],
+      "source_ids": [
+        "mongkolsamrit_2012_life_cycle_host_range_temporal_variation"
+      ]
+    },
+    {
+      "chunk_id": "host_range_formicine_ants_001",
+      "title": "Host range includes Polyrhachis and Camponotus ants in Thailand",
+      "text": "In the Thai rainforest system described by the study, Ophiocordyceps unilateralis s.l. specifically attacked formicine ants in the genera Polyrhachis and Camponotus. This adds host-range detail beyond the common carpenter-ant focus and supports modeling host susceptibility by ant genus. 中文总结：在该泰国雨林系统中，O. unilateralis s.l. 特异性感染蚁亚科中的 Polyrhachis 和 Camponotus 两类蚂蚁。这补充了“木匠蚁”之外的宿主范围信息，也支持在模拟器中按蚂蚁属设置不同易感性。",
+      "tags": [
+        "host range",
+        "Polyrhachis",
+        "Camponotus",
+        "formicine ants",
+        "Thailand",
+        "host specificity",
+        "宿主范围",
+        "宿主特异性",
+        "弓背蚁",
+        "木匠蚁"
+      ],
+      "source_ids": [
+        "mongkolsamrit_2012_life_cycle_host_range_temporal_variation"
+      ]
+    },
+    {
+      "chunk_id": "asexual_sexual_states_001",
+      "title": "Asexual and sexual states may affect host populations differently",
+      "text": "The study highlights that little was known about alternation between the asexual Hirsutella formicarum state and the sexual Ophiocordyceps unilateralis state, even though asexual and sexual reproduction can affect host population dynamics differently. 中文总结：论文指出，此前对无性态 Hirsutella formicarum 与有性态 Ophiocordyceps unilateralis 之间的转换了解有限，而无性和有性繁殖阶段可能以不同方式影响宿主种群动态。",
+      "tags": [
+        "asexual state",
+        "sexual state",
+        "Hirsutella formicarum",
+        "Ophiocordyceps unilateralis",
+        "reproduction",
+        "host population dynamics",
+        "无性态",
+        "有性态",
+        "繁殖",
+        "宿主种群动态"
+      ],
+      "source_ids": [
+        "mongkolsamrit_2012_life_cycle_host_range_temporal_variation"
+      ]
+    },
+    {
+      "chunk_id": "temporal_variation_infection_001",
+      "title": "Temporal variation matters for infection incidence",
+      "text": "By surveying a permanent plot over two years, the study examined temporal variation in Ophiocordyceps development and infection incidence in Polyrhachis and Camponotus ants. For RAG and simulation, this supports treating infection pressure as time-varying rather than constant. 中文总结：通过两年永久样地调查，研究者考察了 Ophiocordyceps 发育以及 Polyrhachis、Camponotus 感染发生率的时间变化。用于 RAG 和模拟器时，这支持把感染压力建模为随时间变化，而不是固定不变。",
+      "tags": [
+        "temporal variation",
+        "infection incidence",
+        "two-year survey",
+        "infection pressure",
+        "pathogen development",
+        "seasonality",
+        "时间变化",
+        "感染发生率",
+        "两年调查",
+        "感染压力"
+      ],
+      "source_ids": [
+        "mongkolsamrit_2012_life_cycle_host_range_temporal_variation"
+      ]
+    },
+    {
+      "chunk_id": "host_parasite_fitness_001",
+      "title": "Host and parasite both adapt to maximize fitness",
+      "text": "The paper frames Ophiocordyceps-ant associations as reciprocal adaptations: both parasite and host are expected to evolve traits that improve fitness and reproductive output. This connects life cycle, host range, and temporal infection patterns to coevolutionary pressure. 中文总结：论文把 Ophiocordyceps 与蚂蚁的关系放在互相适应的框架下理解：寄生物和宿主都会演化出提高自身适合度和繁殖输出的特征。因此，生命周期、宿主范围和感染时间变化都与共同进化压力有关。",
+      "tags": [
+        "host-parasite interaction",
+        "fitness",
+        "reproductive output",
+        "adaptation",
+        "coevolution",
+        "host defense",
+        "宿主寄生物关系",
+        "适合度",
+        "繁殖输出",
+        "共同进化"
+      ],
+      "source_ids": [
+        "mongkolsamrit_2012_life_cycle_host_range_temporal_variation"
+      ]
+    },
+    {
+      "chunk_id": "simulation_lifecycle_temporal_rules_001",
+      "title": "Simulation rules for life cycle and temporal variation",
+      "text": "For a simulator, this study supports adding time-dependent life-cycle rules: pathogen development should progress over multiple stages, reproductive state can be marked as asexual or sexual, infection incidence can vary across time, and host susceptibility can differ between Polyrhachis and Camponotus. 中文总结：用于 simulator 时，可加入随时间变化的生命周期规则：真菌发育分阶段推进，繁殖状态可区分无性态和有性态，感染发生率随时间变化，Polyrhachis 与 Camponotus 可具有不同宿主易感性。",
+      "tags": [
+        "simulation rules",
+        "life cycle stages",
+        "temporal variation",
+        "asexual",
+        "sexual",
+        "host susceptibility",
+        "infection incidence",
+        "模拟规则",
+        "生命周期阶段",
+        "时间变化",
+        "宿主易感性"
+      ],
+      "source_ids": [
+        "mongkolsamrit_2012_life_cycle_host_range_temporal_variation"
+      ]
+    },
+    {
+      "chunk_id": "lifecycle_temporal_simulation_qa_001",
+      "title": "FAQ: add Ophiocordyceps life cycle and temporal variation to simulator",
+      "text": "如何在模拟器里加入 Ophiocordyceps 生命周期和时间变化规则？Based on Mongkolsamrit et al. 2012, the simulator can model Ophiocordyceps unilateralis / Hirsutella formicarum with long-term development, reproductive life span, temporal variation in infection incidence, and alternation between asexual and sexual states. Host susceptibility can distinguish Formicine ant genera such as Polyrhachis and Camponotus, and infection pressure can change over time instead of remaining constant. 中文总结：模拟器可以加入长期生命周期、繁殖寿命、感染发生率随时间变化、无性态 Hirsutella formicarum 与有性态 Ophiocordyceps unilateralis 的转换，并区分 Polyrhachis 与 Camponotus 等蚁亚科宿主的易感性。",
+      "tags": [
+        "simulator",
+        "simulation rules",
+        "life cycle",
+        "temporal variation",
+        "infection incidence",
+        "asexual state",
+        "sexual state",
+        "Hirsutella formicarum",
+        "Polyrhachis",
+        "Camponotus",
+        "模拟器",
+        "生命周期",
+        "时间变化规则",
+        "感染发生率",
+        "无性态",
+        "有性态",
+        "宿主易感性"
+      ],
+      "source_ids": [
+        "mongkolsamrit_2012_life_cycle_host_range_temporal_variation"
+      ]
     }
   ],
   "example_questions_for_rag_testing": [
@@ -703,7 +1711,36 @@
     "How do ants defend themselves against infection?",
     "Why might there be many species in the Ophiocordyceps unilateralis complex?",
     "How should I model zombie fungus infection states in a game?",
-    "Can zombie-ant fungus infect humans?"
+    "Can zombie-ant fungus infect humans?",
+    "昆虫表皮为什么是真菌感染的第一道关键屏障？",
+    "昆虫病原真菌怎样附着并穿透 cuticle？",
+    "昆虫有哪些表皮、行为和共生微生物防御可以抵御真菌？",
+    "如何把 cuticle 表面攻防机制加入真菌感染模拟器？",
+    "Ophiocordyceps 可能通过什么机制操控蚂蚁行为？",
+    "分泌蛋白在僵尸蚂蚁真菌感染中可能有什么作用？",
+    "光照和生物节律为什么可能影响死亡紧咬？",
+    "Ophiocordyceps 的行为操控机制是独特的还是趋同演化的？",
+    "如何在模拟器里表现真菌行为操控的分子机制和节律触发？",
+    "死亡紧咬期间 Ophiocordyceps 和蚂蚁分别有哪些基因表达变化？",
+    "混合转录组如何帮助研究僵尸蚂蚁真菌的行为操控？",
+    "Ophiocordyceps 的候选操控因子有哪些？",
+    "感染蚂蚁的免疫、嗅觉和肌肉基因为什么重要？",
+    "怎样把死亡紧咬的基因表达机制转成模拟器规则？",
+    "僵尸蚂蚁死亡紧咬前会经历哪些行为变化？",
+    "为什么感染蚂蚁会集中死在 graveyard 斑块？",
+    "死亡紧咬为什么常在太阳正午附近同步发生？",
+    "lock-jaw 是怎样让蚂蚁死后仍固定在叶片上的？",
+    "如何在模拟器里表现死亡紧咬的行为和形态机制？",
+    "Ophiocordyceps 感染蚂蚁的 graveyard 是怎样形成和分布的？",
+    "为什么 live Camponotus leonardi 很少出现在 graveyard 里？",
+    "树冠路线和林地表层感染风险有什么关系？",
+    "graveyard 会随时间移动吗？",
+    "如何在模拟器里加入 graveyard 空间生态规则？",
+    "Ophiocordyceps unilateralis 的长期生命周期研究说明了什么？",
+    "Ophiocordyceps unilateralis 在泰国感染哪些蚁亚科宿主？",
+    "Hirsutella formicarum 无性态和 Ophiocordyceps 有性态有什么意义？",
+    "为什么感染发生率需要按时间变化建模？",
+    "如何在模拟器里加入 Ophiocordyceps 生命周期和时间变化规则？"
   ],
   "retrieval_keywords": [
     "zombie-ant fungus",
@@ -730,6 +1767,125 @@
     "host manipulation",
     "parasite",
     "Hypocreales",
-    "Ophiocordycipitaceae"
+    "Ophiocordycipitaceae",
+    "insect cuticle",
+    "epicuticle",
+    "entomopathogenic fungi",
+    "Beauveria bassiana",
+    "Metarhizium anisopliae",
+    "hydrophobin",
+    "Mad1 adhesin",
+    "cuticular lipids",
+    "behavioral fever",
+    "昆虫表皮",
+    "上表皮",
+    "昆虫病原真菌",
+    "表皮脂质",
+    "行为发热",
+    "梳理行为",
+    "behavioral manipulation",
+    "parasite manipulation",
+    "secreted proteins",
+    "effectors",
+    "biological rhythms",
+    "circadian rhythm",
+    "light-driven rhythms",
+    "Entomophthorales",
+    "convergent evolution",
+    "van Roosmalen",
+    "de Bekker",
+    "行为操控",
+    "寄生物操控",
+    "分泌蛋白",
+    "效应蛋白",
+    "生物节律",
+    "昼夜节律",
+    "光照节律",
+    "趋同演化",
+    "mixed transcriptomics",
+    "RNA-Seq",
+    "gene expression",
+    "Camponotus castaneus",
+    "death grip gene expression",
+    "small secreted proteins",
+    "SSP",
+    "enterotoxin",
+    "ergot alkaloids",
+    "penitrem",
+    "protein-tyrosine phosphatase",
+    "octopamine",
+    "dopamine",
+    "period",
+    "cycle",
+    "lock-jaw",
+    "muscle atrophy",
+    "immune suppression",
+    "chemosensory communication",
+    "parasitic to saprophytic",
+    "混合转录组",
+    "基因表达",
+    "死亡紧咬",
+    "小分泌蛋白",
+    "肠毒素",
+    "免疫抑制",
+    "化学通讯",
+    "锁颚",
+    "肌肉萎缩",
+    "Hughes 2011",
+    "Behavioral mechanisms and morphological symptoms",
+    "Camponotus leonardi",
+    "Thai rainforest",
+    "graveyard patches",
+    "abaxial leaf vein",
+    "solar noon",
+    "random walking",
+    "convulsions",
+    "mandibular muscle atrophy",
+    "head capsule",
+    "extended phenotype",
+    "形态症状",
+    "墓地斑块",
+    "叶片背面叶脉",
+    "太阳正午",
+    "随机游走",
+    "抽搐",
+    "下颚肌肉萎缩",
+    "延伸表型",
+    "Pontoppidan 2009",
+    "Graveyards on the Move",
+    "spatio-temporal distribution",
+    "graveyards",
+    "canopy trails",
+    "forest floor infection",
+    "host avoidance",
+    "patchy distribution",
+    "Moran's I",
+    "SADIE",
+    "Forest Dynamics plot",
+    "时空分布",
+    "树冠路线",
+    "林地表层感染",
+    "宿主回避",
+    "斑块分布",
+    "空间生态",
+    "Mongkolsamrit 2012",
+    "Life cycle host range temporal variation",
+    "Hirsutella formicarum",
+    "Polyrhachis",
+    "Formicine ants",
+    "asexual state",
+    "sexual state",
+    "two-year survey",
+    "infection incidence",
+    "temporal variation",
+    "reproductive life span",
+    "生命周期",
+    "宿主范围",
+    "时间变化",
+    "无性态",
+    "有性态",
+    "感染发生率",
+    "蚁亚科",
+    "长期调查"
   ]
 }

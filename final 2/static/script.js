@@ -3775,11 +3775,16 @@ async function checkRagHealth() {
             throw new Error(data.message || data.error || `HTTP ${res.status}`);
         }
         if (ragAnswerMeta) {
-            ragAnswerMeta.textContent =
-                `status: ${data.status || 'unknown'} | source: ${data.source || 'unknown'} | collection: ${data.collection || 'unknown'} | count: ${data.count ?? 'unknown'} | embedding: ${data.embedding_model || 'unknown'}`;
+            ragAnswerMeta.innerHTML = buildRagMetaDetailsHtml('状态信息', [
+                ['状态', data.status || 'unknown'],
+                ['来源', data.source || 'unknown'],
+                ['集合', data.collection || 'unknown'],
+                ['数量', data.count ?? 'unknown'],
+                ['Embedding', data.embedding_model || 'unknown']
+            ]);
         }
         if (ragAnswerContent) {
-            ragAnswerContent.textContent = formatRagDiagnostics(data);
+            ragAnswerContent.innerHTML = buildRagHealthHtml(data);
         }
         if (ragAnswerPanel) ragAnswerPanel.classList.remove('hidden');
     } catch (error) {
@@ -3854,7 +3859,7 @@ async function askRagQuestion() {
         const res = await fetch(RAG_ASK_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question, top_k: 3 })
+            body: JSON.stringify({ question, top_k: 5 })
         });
 
         const data = await res.json();
@@ -3863,46 +3868,16 @@ async function askRagQuestion() {
         }
 
         if (ragAnswerMeta) {
-            ragAnswerMeta.textContent =
-                `问题：${data.question}\nsource: ${data.source || 'unknown'}\n检索条数：${(data.retrieved || []).length}\nquery_vector_dim: ${data.query_vector_dim ?? 'unknown'}`;
-        }
-
-        const answerLines = [];
-        answerLines.push('【回答】');
-        answerLines.push(data.answer || '暂无回答');
-        answerLines.push('');
-        if (data.diagnostics) {
-            answerLines.push('【诊断】');
-            const diagnosticsText = formatRagDiagnostics({
-                status: data.source === 'chromadb' ? 'ok' : 'degraded',
-                source: data.source,
-                diagnostics: data.diagnostics,
-                collection: data.diagnostics.collection,
-                count: data.diagnostics.collection_count,
-                embedding_model: data.diagnostics.embedding_model,
-                chroma_dir: data.diagnostics.chroma_dir
-            }).split('【原始诊断 JSON】')[0].trim();
-            answerLines.push(diagnosticsText);
-            answerLines.push('');
-        }
-        answerLines.push('【检索证据】');
-
-        const retrieved = data.retrieved || [];
-        if (!retrieved.length) {
-            answerLines.push('没有检索到相关知识片段。');
-        } else {
-            retrieved.forEach((item, index) => {
-                answerLines.push(`${index + 1}. ${item.chunk_id}`);
-                answerLines.push(`title: ${item.metadata?.title || ''}`);
-                answerLines.push(`tags: ${item.metadata?.tags || ''}`);
-                answerLines.push(`distance: ${item.distance}`);
-                answerLines.push(item.document || '');
-                answerLines.push('');
-            });
+            ragAnswerMeta.innerHTML = buildRagMetaDetailsHtml('查询信息', [
+                ['问题', data.question || question],
+                ['来源', data.source || 'unknown'],
+                ['证据', `${(data.retrieved || []).length} 条`],
+                ['向量维度', data.query_vector_dim ?? 'unknown']
+            ]);
         }
 
         if (ragAnswerContent) {
-            ragAnswerContent.textContent = answerLines.join('\n');
+            ragAnswerContent.innerHTML = buildRagAnswerHtml(data);
         }
     } catch (error) {
         if (ragAnswerMeta) ragAnswerMeta.textContent = 'RAG 提问失败';
@@ -3910,6 +3885,211 @@ async function askRagQuestion() {
     } finally {
         if (ragAskBtn) ragAskBtn.disabled = false;
     }
+}
+
+function buildRagMetaDetailsHtml(summary, items) {
+    const filteredItems = items.filter(([, value]) => value !== undefined && value !== null && value !== '');
+    return [
+        '<details class="rag-meta-details">',
+        `<summary>${escapeHtml(summary)} <span>${filteredItems.length} 项</span></summary>`,
+        '<div class="rag-meta-pill-row">',
+        buildRagMetaHtml(filteredItems),
+        '</div>',
+        '</details>'
+    ].join('');
+}
+
+function buildRagMetaHtml(items) {
+    return items
+        .filter(([, value]) => value !== undefined && value !== null && value !== '')
+        .map(([label, value]) => (
+            `<span class="rag-meta-pill"><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</span>`
+        ))
+        .join('');
+}
+
+function buildRagHealthHtml(data) {
+    const diagnostics = data?.diagnostics || {};
+    const rows = [
+        ['ChromaDB 路径', data?.chroma_dir || diagnostics.chroma_dir || 'unknown'],
+        ['Collection', data?.collection || diagnostics.collection || 'unknown'],
+        ['知识片段数量', data?.count ?? diagnostics.collection_count ?? 'unknown'],
+        ['Embedding 可用', diagnostics.embedding_available ?? 'unknown']
+    ];
+
+    ['chroma_error', 'embedding_error', 'retrieval_error', 'glm_error'].forEach((key) => {
+        if (diagnostics[key]) {
+            rows.push([key, `${diagnostics[key].type || 'Error'}: ${diagnostics[key].message || diagnostics[key]}`]);
+        }
+    });
+    if (diagnostics.retrieval_warning) {
+        rows.push(['retrieval_warning', diagnostics.retrieval_warning]);
+    }
+    if (Array.isArray(diagnostics.local_fallback_files) && diagnostics.local_fallback_files.length) {
+        rows.push(['local_fallback_files', diagnostics.local_fallback_files.join(', ')]);
+    }
+
+    return [
+        '<section class="rag-answer-card rag-health-card">',
+        '<div class="rag-answer-card-title">RAG 状态</div>',
+        '<dl class="rag-diagnostics-grid">',
+        ...rows.map(([label, value]) => (
+            `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`
+        )),
+        '</dl>',
+        '</section>'
+    ].join('');
+}
+
+function buildRagAnswerHtml(data) {
+    const retrieved = data.retrieved || [];
+    const html = [
+        '<section class="rag-answer-card rag-answer-main">',
+        '<div class="rag-answer-card-title">回答</div>',
+        `<div class="rag-answer-body">${renderRagRichText(data.answer || '暂无回答')}</div>`,
+        '</section>'
+    ];
+
+    if (data.diagnostics) {
+        html.push(buildRagDiagnosticsHtml(data));
+    }
+
+    html.push('<details class="rag-answer-card rag-evidence-section">');
+    html.push(`<summary class="rag-answer-card-title">检索证据 <span>${retrieved.length} 条</span></summary>`);
+    if (!retrieved.length) {
+        html.push('<p class="rag-empty-state">没有检索到相关知识片段。</p>');
+    } else {
+        html.push('<div class="rag-evidence-list">');
+        retrieved.forEach((item, index) => {
+            const metadata = item.metadata || {};
+            const title = metadata.title || item.chunk_id || `知识片段 ${index + 1}`;
+            const tags = normalizeRagTags(metadata.tags);
+            html.push('<article class="rag-evidence-card">');
+            html.push(`<div class="rag-evidence-title">${index + 1}. ${escapeHtml(title)}</div>`);
+            html.push(`<div class="rag-evidence-source">${escapeHtml(formatRagSource(metadata))}</div>`);
+            if (tags.length) {
+                html.push(`<div class="rag-tag-row">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</div>`);
+            }
+            if (item.distance !== undefined && item.distance !== null) {
+                html.push(`<div class="rag-distance">distance ${escapeHtml(formatRagDistance(item.distance))}</div>`);
+            }
+            html.push(`<div class="rag-evidence-document">${renderRagRichText(item.document || '')}</div>`);
+            html.push('</article>');
+        });
+        html.push('</div>');
+    }
+    html.push('</details>');
+    return html.join('');
+}
+
+function buildRagDiagnosticsHtml(data) {
+    const diagnostics = data.diagnostics || {};
+    const rows = [
+        ['状态', data.source === 'chromadb' ? 'ok' : 'degraded'],
+        ['来源', data.source || 'unknown'],
+        ['Collection', diagnostics.collection || 'unknown'],
+        ['知识片段数量', diagnostics.collection_count ?? 'unknown'],
+        ['Embedding 模型', diagnostics.embedding_model || 'unknown'],
+        ['ChromaDB 路径', diagnostics.chroma_dir || 'unknown']
+    ];
+
+    return [
+        '<details class="rag-diagnostics-panel">',
+        '<summary>诊断信息</summary>',
+        '<dl class="rag-diagnostics-grid">',
+        ...rows.map(([label, value]) => (
+            `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`
+        )),
+        '</dl>',
+        '</details>'
+    ].join('');
+}
+
+function normalizeRagTags(tags) {
+    if (Array.isArray(tags)) {
+        return tags.map((tag) => String(tag).trim()).filter(Boolean);
+    }
+    return String(tags || '')
+        .split(/[,，;；|]/)
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+}
+
+function formatRagDistance(distance) {
+    const numericDistance = Number(distance);
+    return Number.isFinite(numericDistance) ? numericDistance.toFixed(4) : String(distance);
+}
+
+function renderRagRichText(value) {
+    const lines = String(value || '').replace(/\r\n/g, '\n').split('\n');
+    const html = [];
+    let paragraph = [];
+    let listType = null;
+    let listItems = [];
+
+    const flushParagraph = () => {
+        if (!paragraph.length) return;
+        const text = paragraph.join(' ');
+        const className = isRagLeadSentence(text) ? ' class="rag-answer-lead"' : '';
+        html.push(`<p${className}>${formatRagInline(text)}</p>`);
+        paragraph = [];
+    };
+    const flushList = () => {
+        if (!listType) return;
+        html.push(`<${listType}>${listItems.map((item) => `<li>${formatRagInline(item)}</li>`).join('')}</${listType}>`);
+        listType = null;
+        listItems = [];
+    };
+
+    lines.forEach((rawLine) => {
+        const line = rawLine.trim();
+        if (!line) {
+            flushParagraph();
+            flushList();
+            return;
+        }
+
+        const headingMatch = line.match(/^#{1,4}\s+(.+)$/);
+        if (headingMatch) {
+            flushParagraph();
+            flushList();
+            html.push(`<h4>${formatRagInline(headingMatch[1])}</h4>`);
+            return;
+        }
+
+        const unorderedMatch = line.match(/^[-*]\s+(.+)$/);
+        const orderedMatch = line.match(/^\d+[.)]\s+(.+)$/);
+        if (unorderedMatch || orderedMatch) {
+            flushParagraph();
+            const nextType = unorderedMatch ? 'ul' : 'ol';
+            if (listType && listType !== nextType) {
+                flushList();
+            }
+            listType = nextType;
+            listItems.push(unorderedMatch ? unorderedMatch[1] : orderedMatch[1]);
+            return;
+        }
+
+        flushList();
+        paragraph.push(line);
+    });
+
+    flushParagraph();
+    flushList();
+    return html.join('') || '<p>暂无内容。</p>';
+}
+
+function isRagLeadSentence(value) {
+    const text = String(value || '').trim();
+    return /^根据检索证据[，,]/.test(text);
+}
+
+function formatRagInline(value) {
+    return escapeHtml(value)
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 }
 
 // Restart game
