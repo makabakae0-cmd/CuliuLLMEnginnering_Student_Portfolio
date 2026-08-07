@@ -21,7 +21,7 @@ AI vs AI 自动演示模式 is a one-click live demonstration flow for Fungi Sim
 
 1. 真菌 AI calls the existing `/api/generate` backend to deploy spores without receiving the host spawn point.
 2. 宿主 AI calls `/api/generate` to choose movement or layer changes, without knowing spore locations.
-3. If infection or failure happens, the demo accelerates infection simulation and calls the existing AI commentary flow.
+3. If infection happens, the demo accelerates the display-only infection timeline and calls the existing AI commentary flow; a depleted step budget is a direct fungus victory.
 4. The UI shows progress in the bottom AI VS AI status banner and lets the user stop the demo.
 
 ## Key Files

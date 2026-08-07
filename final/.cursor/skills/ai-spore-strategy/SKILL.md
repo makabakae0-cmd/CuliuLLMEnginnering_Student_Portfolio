@@ -16,7 +16,7 @@ Use this skill when the user mentions:
 
 ## Core Concept
 
-The fungus AI strategy module turns the visible game rules, nest, environment, and fungus selection into 10 valid spores without exposing the host spawn point.
+The fungus AI strategy module turns the visible game rules, nest, environment, and fungus selection into the pairing-specific number of valid spores without exposing the host spawn point.
 
 Flow:
 
@@ -39,9 +39,9 @@ Before changing this feature, read `handler.js` and validate its anchors after e
 
 Keep these invariants:
 
-- AI deployment must produce exactly 10 spores after normalization.
-- Spore coordinates must stay in `0..100`; layer must stay in `0..2`.
+- AI deployment must produce the active V1 pairing target count after normalization.
+- Spore coordinates must stay in `0..100`; layers must follow the active fungus rule.
 - Fungus AI must not receive `gameState.hostPosition` or precise host spawn coordinates.
 - Ghost moth special cases should keep spores on the valid host layer.
 - Failed AI generation should leave a usable manual or fallback deployment path.
-- Confirmation should only move to host phase after the deployment is repaired to 10 valid spores.
+- Confirmation should only move to host phase after the deployment is repaired to the target count and allowed layers.

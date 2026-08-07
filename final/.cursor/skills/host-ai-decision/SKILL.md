@@ -22,7 +22,7 @@ Flow:
 
 1. `buildHostAISnapshot()` creates the host-side snapshot.
 2. `decideHostMoveAI()` asks `/api/generate` for a strict JSON action.
-3. `normalizeHostAIAction()` and `repairHostAction()` validate the action.
+3. `normalizeHostAIAction()` and `repairHostAction()` validate move, layer, and Burrow actions.
 4. `getSmartFallbackHostMove()` keeps the demo moving when the model fails.
 5. The action is applied through `moveHost()` or `changeLayer()`.
 
@@ -40,7 +40,7 @@ Before changing this feature, read `handler.js` and validate its anchors after e
 Keep these invariants:
 
 - Host AI must not receive spore positions, nearest-spore hints, or trap counts.
-- Actions must normalize to either `{ action: "move", direction }` or `{ action: "layer", delta }`.
+- Actions normalize to move, layer, or Burrow; Groom is offered only after a wood-ant spore exposure.
 - Invalid model output should fall back to a deterministic movement heuristic.
 - Movement must respect map boundaries, layer bounds, step limits, and host controllability.
 - AI vs AI demo should remain interruptible while host AI is thinking or moving.

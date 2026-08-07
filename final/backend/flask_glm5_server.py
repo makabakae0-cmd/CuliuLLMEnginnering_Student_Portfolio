@@ -10,6 +10,7 @@ API:
 Env:
 - ZHIPUAI_API_KEY=your_key
 - GLM5_MODEL=glm-5 (optional)
+- GLM_TRUST_ENV_PROXY=1 (optional; default bypasses system proxy)
 - PORT=8002 (optional)
 """
 
@@ -30,6 +31,8 @@ app = Flask(__name__)
 CORS(app)
 
 BIGMODEL_CHAT_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+GLM_HTTP_SESSION = requests.Session()
+GLM_HTTP_SESSION.trust_env = os.getenv("GLM_TRUST_ENV_PROXY", "0") == "1"
 DEFAULT_MODEL = os.getenv("GLM5_MODEL", "glm-5")
 DEFAULT_EMBED_MODEL = os.getenv("RAG_EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 DEFAULT_CHROMA_DIR = os.getenv(
@@ -38,10 +41,11 @@ DEFAULT_CHROMA_DIR = os.getenv(
 )
 DEFAULT_CHROMA_COLLECTION = os.getenv("RAG_CHROMA_COLLECTION", "zombie_fungi_kb")
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-LOCAL_RAG_FILES = [
-    PROJECT_ROOT / "Lesson10_student_workbook.md",
-    PROJECT_ROOT / "ppt_pagesscript.md",
-]
+LOCAL_RAG_FILES: List[Path] = []
+NON_SCIENCE_SOURCE_MARKERS = (
+    "ppt_pagesscript",
+    "lesson10_student_workbook",
+)
 LOCAL_RAG_SNIPPETS = [
     {
         "chunk_id": "builtin:death_grip",
@@ -118,6 +122,14 @@ def _get_chroma_collection():
 
 def _error_payload(exc: Exception) -> Dict[str, str]:
     return {"type": exc.__class__.__name__, "message": str(exc)}
+
+
+def _is_science_evidence(metadata: Dict[str, Any]) -> bool:
+    source_text = " ".join(
+        str(metadata.get(key, ""))
+        for key in ("title", "source", "source_titles", "source_ids")
+    ).lower()
+    return not any(marker in source_text for marker in NON_SCIENCE_SOURCE_MARKERS)
 
 
 def _build_rag_diagnostics(check_embedding: bool = False) -> Dict[str, Any]:
@@ -319,7 +331,7 @@ def _call_glm(messages: List[Dict[str, str]], model: str, temperature: float = 0
         "max_tokens": max_tokens,
         "thinking": {"type": "disabled"},
     }
-    resp = requests.post(
+    resp = GLM_HTTP_SESSION.post(
         BIGMODEL_CHAT_URL,
         headers={
             "Content-Type": "application/json",
@@ -359,7 +371,7 @@ def rag_health() -> Any:
     )
     sqlite_ready = bool(diagnostics.get("sqlite_collection_exists")) and bool(diagnostics.get("sqlite_embedding_count"))
     embedding_ready = diagnostics.get("embedding_available") is True
-    fallback_ready = bool(diagnostics.get("local_fallback_files"))
+    fallback_ready = bool(diagnostics.get("local_fallback_files")) or bool(LOCAL_RAG_SNIPPETS)
 
     if chroma_ready and embedding_ready:
         status = "ok"
@@ -400,9 +412,10 @@ def rag_ask() -> Any:
         embed_model = _get_embed_model()
         collection = _get_chroma_collection()
         query_embedding = embed_model.encode([question]).tolist()[0]
+        candidate_count = min(max(top_k * 4, top_k), max(collection.count(), 1))
         result = collection.query(
             query_embeddings=[query_embedding],
-            n_results=top_k,
+            n_results=candidate_count,
             include=["documents", "metadatas", "distances"],
         )
         ids = result.get("ids", [[]])[0]
@@ -411,14 +424,19 @@ def rag_ask() -> Any:
         distances = result.get("distances", [[]])[0]
 
         for index, chunk_id in enumerate(ids):
+            metadata = metadatas[index] or {}
+            if not _is_science_evidence(metadata):
+                continue
             retrieved.append(
                 {
                     "chunk_id": chunk_id,
                     "document": documents[index],
-                    "metadata": metadatas[index] or {},
+                    "metadata": metadata,
                     "distance": distances[index],
                 }
             )
+            if len(retrieved) >= top_k:
+                break
     except Exception as exc:
         source = "local_fallback"
         diagnostics["retrieval_error"] = _error_payload(exc)
@@ -500,7 +518,7 @@ def generate() -> Any:
     body["thinking"] = thinking if isinstance(thinking, dict) else {"type": "disabled"}
 
     try:
-        resp = requests.post(
+        resp = GLM_HTTP_SESSION.post(
             BIGMODEL_CHAT_URL,
             headers={
                 "Content-Type": "application/json",

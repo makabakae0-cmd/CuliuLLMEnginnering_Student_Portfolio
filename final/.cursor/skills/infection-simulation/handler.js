@@ -8,10 +8,7 @@ const feature = {
         'infection-controls',
         'infection-stage',
         'stage-number',
-        'timer-display',
-        'survival-counter',
-        'survival-days',
-        'health-days',
+        'stage-total',
         'stage-guide-btn',
         'stage-guide-panel',
         'stage-guide-content'
@@ -19,41 +16,39 @@ const feature = {
     functions: [
         'enterInfectionMode',
         'startInfectionLoop',
-        'runInfectionSimulation',
         'pauseSimulation',
         'resumeSimulation',
         'speedUpSimulation',
         'getStageInfo',
-        'getStageDurations',
+        'getInfectionStageCount',
         'updateInfectionStageDisplay',
-        'advanceInfectionStage',
         'toggleStageGuide',
         'hydrateStageGuideWithRAG',
         'enrichCurrentStageWithRAG'
     ],
     backendRoutes: ['/api/rag/ask'],
     pipeline: [
-        { id: 'enter', reads: ['spore encounter', 'step limit'], writes: ['isInfectionMode', 'infectionStep'], requires: ['enterInfectionMode'], produces: ['infection controls visible'] },
-        { id: 'tick', reads: ['simulationSpeed', 'infectionLastTickTs'], writes: ['infectionDaysSurvived', 'infectionHealthDays'], requires: ['startInfectionLoop'], produces: ['updated survival state'] },
-        { id: 'stage', reads: ['infectionDaysSurvived', 'infectionGoalDays'], writes: ['currentInfectionStage'], requires: ['getStageInfo', 'updateInfectionStageDisplay'], produces: ['current stage display'] },
+        { id: 'enter', reads: ['valid spore encounter'], writes: ['isInfectionMode', 'infectionStep'], requires: ['enterInfectionMode'], produces: ['infection controls visible'] },
+        { id: 'tick', reads: ['stageStartTime', 'simulationSpeed'], writes: ['currentInfectionStage'], requires: ['startInfectionLoop'], produces: ['biology timeline progress'] },
+        { id: 'stage', reads: ['fungusType', 'currentInfectionStage'], writes: ['stage display'], requires: ['getStageInfo', 'getInfectionStageCount', 'updateInfectionStageDisplay'], produces: ['pairing-specific stage display'] },
         { id: 'controls', reads: ['pause state', 'speed'], writes: ['timer state'], requires: ['pauseSimulation', 'resumeSimulation', 'speedUpSimulation'], produces: ['single active timer'] },
-        { id: 'result', reads: ['health days', 'goal days'], writes: ['result screen'], requires: ['showResult'], produces: ['host or fungus victory'] }
+        { id: 'result', reads: ['completed infection timeline'], writes: ['result screen'], requires: ['showResult'], produces: ['fungus victory'] }
     ],
-    minimalState: ['isInfectionMode', 'currentInfectionStage', 'infectionDaysSurvived', 'infectionHealthDays', 'infectionGoalDays', 'simulationTimer', 'simulationSpeed', 'isHostControllable'],
-    inputs: ['infection trigger', 'simulation speed', 'food collection', 'infected movement penalty'],
-    outputs: ['infection stage display', 'survival counter', 'health display', 'stage guide', 'result screen'],
+    minimalState: ['isInfectionMode', 'currentInfectionStage', 'stageStartTime', 'simulationTimer', 'simulationSpeed'],
+    inputs: ['valid spore infection trigger', 'simulation speed', 'fungus pairing'],
+    outputs: ['infection stage display', 'stage guide', 'fungus result screen'],
     validations: [
         { id: 'symbols-exist', category: 'existence', checks: ['keyFiles', 'domIds', 'functions', 'backendRoutes'] },
-        { id: 'infection-state-io', category: 'io', checks: ['stage display', 'survival days', 'health days', 'result screen'] },
-        { id: 'stage-bounds', category: 'boundary', checks: ['stage 1..8', 'skipped stages safe'] },
+        { id: 'infection-state-io', category: 'io', checks: ['dynamic stage display', 'result screen'] },
+        { id: 'stage-bounds', category: 'boundary', checks: ['stage 1..7 or 1..8'] },
         { id: 'timer-singleton', category: 'boundary', checks: ['pause resume speed do not duplicate timers'] },
         { id: 'rag-fallback', category: 'fallback', checks: ['local stage guide when RAG unavailable'] },
-        { id: 'victory-result', category: 'result', checks: ['health depletion', 'survival goal'] }
+        { id: 'victory-result', category: 'result', checks: ['infection means fungus victory'] }
     ],
     fallbacks: ['local stage guide text', 'RAG unavailable display'],
     invariants: [
-        'Stage numbers must stay in 1..8.',
-        'Skipped stages must not break stage display or victory handling.',
+        'Stage numbers must stay within the active fungus timeline.',
+        'O. sinensis uses seven direct stages; ant fungi use eight.',
         'Pause, resume, and speed controls must not create duplicate timers.',
         'Stage guide should work with local text when RAG is unavailable.',
         'Final results should stop active simulation timers.'

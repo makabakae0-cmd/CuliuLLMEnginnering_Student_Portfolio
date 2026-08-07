@@ -19,8 +19,6 @@ let scienceFact;
 let currentPhase;
 let timerDisplay;
 let timerElement;
-let survivalCounter;
-let survivalDaysElement;
 let sporeCountElement;
 let fungusControls;
 let hostControls;
@@ -35,19 +33,21 @@ let resultScienceFacts;
 let hostIndicator;
 let switchSideBtn;
 let nestIndicator;
-let energyLevelElement;
 let currentLayerElement;
-let realTimeCounter;
-let realTimeDisplay;
 let stepCountElement;
 let infectionStageElement; // New element for infection stage display
 let stageNumberElement; // New element for stage number
+let stageTotalElement;
+let infectionTimeComparisonElement;
+let infectionNaturalTimeElement;
+let infectionSimulationTimeElement;
+let infectionTotalTimeElement;
+let hostStepStatusElement;
 let aiCommentaryBtn;
 let aiCommentaryPanel;
 let aiCommentaryMeta;
 let aiCommentaryContent;
 let loadingText;
-let healthDaysElement;
 let ragQuestionInput;
 let ragAskBtn;
 let ragAnswerPanel;
@@ -57,6 +57,123 @@ let infectionSpeedBtn;
 let autoDemoSpeedBtn;
 const stageGuideRagCache = new Map();
 let stageGuideHydrationToken = 0;
+let scienceFactHideTimer = null;
+let foodSerial = 0;
+let resultScienceRequestToken = 0;
+
+const ENVIRONMENTS = {
+    rainforest: { name: '热带雨林' },
+    monsoon_forest: { name: '热带季雨林' },
+    temperate_forest: { name: '温带森林' },
+    alpine_meadow: { name: '高山草甸' }
+};
+
+const V1_PAIRINGS = {
+    unilateralis: {
+        fungusName: 'O. unilateralis',
+        hostType: 'camponotus',
+        hostName: '木蚁（Camponotus）',
+        preferredEnvironments: ['rainforest', 'monsoon_forest'],
+        baseSporeCount: 9,
+        baseSporeLabel: '9 个孢子',
+        requiredContacts: 1,
+        allowedLayers: [0, 1, 2],
+        baseRequiredLayers: {},
+        environmentBuffs: {
+            rainforest: { count: 1, layer: 2, label: '额外高层孢子 +1' },
+            monsoon_forest: { count: 1, layer: null, label: '额外普通孢子 +1' }
+        }
+    },
+    kimflemingiae: {
+        fungusName: 'O. kimflemingiae',
+        hostType: 'camponotus',
+        hostName: '木蚁（Camponotus castaneus）',
+        preferredEnvironments: ['temperate_forest'],
+        baseSporeCount: 10,
+        baseSporeLabel: '10 个孢子',
+        requiredContacts: 1,
+        allowedLayers: [0, 1],
+        baseRequiredLayers: {},
+        environmentBuffs: {
+            temperate_forest: { count: 1, layer: 1, label: '额外植被孢子 +1' }
+        }
+    },
+    australis: {
+        fungusName: 'O. australis',
+        hostType: 'ponerine',
+        hostName: '猛蚁（Ponerinae）',
+        preferredEnvironments: ['rainforest'],
+        baseSporeCount: 10,
+        baseSporeLabel: '10 个孢子',
+        requiredContacts: 1,
+        allowedLayers: [0, 1],
+        baseRequiredLayers: {},
+        environmentBuffs: {
+            rainforest: { count: 1, layer: 0, label: '额外地面孢子 +1' }
+        }
+    },
+    metarhizium: {
+        fungusName: 'M. anisopliae',
+        hostType: 'atta',
+        hostName: '切叶蚁（Atta）',
+        preferredEnvironments: ['rainforest', 'monsoon_forest'],
+        baseSporeCount: 12,
+        baseSporeLabel: '12 个地面孢子',
+        requiredContacts: 2,
+        allowedLayers: [0],
+        baseRequiredLayers: {},
+        environmentBuffs: {
+            rainforest: { count: 1, layer: 0, label: '额外地面孢子 +1' },
+            monsoon_forest: { count: 1, layer: 0, label: '额外地面孢子 +1' }
+        }
+    },
+    sinensis: {
+        fungusName: 'O. sinensis',
+        hostType: 'ghost_moth',
+        hostName: '鬼天蛾幼虫（Thitarodes）',
+        preferredEnvironments: ['alpine_meadow'],
+        baseSporeCount: 12,
+        baseSporeLabel: '12 个地面孢子',
+        requiredContacts: 1,
+        allowedLayers: [0],
+        baseRequiredLayers: {},
+        environmentBuffs: {
+            alpine_meadow: { count: 1, layer: 0, label: '额外地面孢子 +1' }
+        }
+    }
+};
+
+function getPairing(fungusType = gameState?.fungusType || 'unilateralis') {
+    return V1_PAIRINGS[fungusType] || V1_PAIRINGS.unilateralis;
+}
+
+function getPairMatch(fungusType = gameState?.fungusType || 'unilateralis', hostType = gameState?.hostType || 'camponotus') {
+    const pairing = getPairing(fungusType);
+    const compatible = pairing.hostType === hostType;
+    const requiredContacts = pairing.requiredContacts + (compatible ? 0 : 1);
+    return {
+        compatible,
+        requiredContacts,
+        label: compatible
+            ? `科学匹配 Buff：${requiredContacts} 次有效接触即可感染`
+            : `不匹配 Debuff：缺乏可靠自然感染记录，游戏中需 ${requiredContacts} 次有效接触`
+    };
+}
+
+function getSporeRule(fungusType = gameState.fungusType, environment = gameState.environment) {
+    const pairing = getPairing(fungusType);
+    const buff = pairing.environmentBuffs[environment] || null;
+    const requiredLayerCounts = { ...pairing.baseRequiredLayers };
+    if (buff && buff.layer !== null) {
+        requiredLayerCounts[buff.layer] = (requiredLayerCounts[buff.layer] || 0) + buff.count;
+    }
+    return {
+        targetCount: pairing.baseSporeCount + (buff?.count || 0),
+        allowedLayers: pairing.allowedLayers.slice(),
+        requiredLayerCounts,
+        buff
+    };
+}
 
 const autoDemo = {
     active: false,
@@ -80,35 +197,34 @@ let gameState = {
     environment: 'rainforest',
     fungusType: 'unilateralis',
     spores: [],
+    foodItems: [],
+    foodRefreshTimer: null,
+    foodCollected: 0,
     hostPosition: { x: 0, y: 0, layer: 0 }, // Will be set randomly
     nestPosition: { x: 0, y: 0, layer: 0 }, // Will be set randomly
     stepsTaken: 0,
     maxSteps: 15,
-    // 兼容旧逻辑保留字段（感染新规则不再使用它们作为唯一时间来源）
-    survivalDays: 15,
-    maxSurvivalDays: 15,
     timer: null,
     timeRemaining: 60,
     simulationTimer: null,
     simulationSpeed: 30000,
     isPaused: false,
-    gameDay: 0,
-    nutrition: 'high',
-    energy: 0,
-    foodItems: [],
     isInfectionMode: false,
     sporesVisible: true,
     infectionStep: 0,
     currentInfectionStage: 0,
     stageStartTime: 0,
-    isHostControllable: true, // Track if host can be controlled
-
-    // 感染阶段新规则：生存 15 天获胜 + 生命值衰减
-    infectionGoalDays: 15,
-    infectionDaysSurvived: 0,
-    infectionHealthDays: 0,
-    infectionPenaltyCyclesApplied: 0,
-    infectionLastTickTs: 0
+    stageElapsedMs: 0,
+    isHostControllable: true,
+    firstLayerChangeFree: true,
+    groomUsed: false,
+    pendingExposure: false,
+    burrowArmed: false,
+    burrowCooldownMoves: 0,
+    groundDashArmed: false,
+    groundDashUsed: false,
+    sanitizeUsesRemaining: 0,
+    exposureCount: 0
 };
 
 // Initialize the game
@@ -121,8 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
     currentPhase = document.getElementById('current-phase');
     timerDisplay = document.getElementById('timer-display');
     timerElement = document.getElementById('timer');
-    survivalCounter = document.getElementById('survival-counter');
-    survivalDaysElement = document.getElementById('survival-days');
     sporeCountElement = document.getElementById('spore-count');
     fungusControls = document.getElementById('fungus-controls');
     hostControls = document.getElementById('host-controls');
@@ -137,19 +251,21 @@ document.addEventListener('DOMContentLoaded', () => {
     hostIndicator = document.getElementById('host-indicator');
     switchSideBtn = document.getElementById('switch-side-btn');
     nestIndicator = document.getElementById('nest-indicator');
-    energyLevelElement = document.getElementById('energy-level');
     currentLayerElement = document.getElementById('current-layer');
-    realTimeCounter = document.getElementById('real-time-counter');
-    realTimeDisplay = document.getElementById('real-time-display');
     stepCountElement = document.getElementById('step-count');
     infectionStageElement = document.getElementById('infection-stage');
     stageNumberElement = document.getElementById('stage-number');
+    stageTotalElement = document.getElementById('stage-total');
+    infectionTimeComparisonElement = document.getElementById('infection-time-comparison');
+    infectionNaturalTimeElement = document.getElementById('infection-natural-time');
+    infectionSimulationTimeElement = document.getElementById('infection-simulation-time');
+    infectionTotalTimeElement = document.getElementById('infection-total-time');
+    hostStepStatusElement = document.getElementById('host-step-status');
     aiCommentaryBtn = document.getElementById('ai-commentary-btn');
     aiCommentaryPanel = document.getElementById('ai-commentary-panel');
     aiCommentaryMeta = document.getElementById('ai-commentary-meta');
     aiCommentaryContent = document.getElementById('ai-commentary-content');
     loadingText = document.getElementById('loading-text');
-    healthDaysElement = document.getElementById('health-days');
     ragQuestionInput = document.getElementById('rag-question-input');
     ragAskBtn = document.getElementById('rag-ask-btn');
     ragAnswerPanel = document.getElementById('rag-answer-panel');
@@ -162,8 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize map first
     initializeMap();
     
-    // Update environment options
-    updateEnvironmentOptions('camponotus');
+    onFungusChange(document.getElementById('fungus-type')?.value || 'unilateralis');
     
     // Debug: Ensure grid elements exist
     const grids = document.querySelectorAll('.grid');
@@ -191,6 +306,15 @@ function initSiteNavigation() {
             if (!targetId) return;
 
             event.preventDefault();
+            if (
+                targetId !== 'game-section' &&
+                gameSection &&
+                !gameSection.classList.contains('hidden') &&
+                gameState.currentPhase !== 'setup'
+            ) {
+                returnToSetup(targetId);
+                return;
+            }
             navigateToSection(targetId);
         });
     });
@@ -206,6 +330,14 @@ function initSiteNavigation() {
 
     if (navScrollTop) {
         navScrollTop.addEventListener('click', () => {
+            if (
+                gameSection &&
+                !gameSection.classList.contains('hidden') &&
+                gameState.currentPhase !== 'setup'
+            ) {
+                returnToSetup('home-section');
+                return;
+            }
             navigateToSection('home-section');
         });
     }
@@ -273,8 +405,9 @@ function updateActiveNavLink() {
 // Keyboard movement controls for host phase
 function isKeyboardControlEnabled() {
     if (!gameSection || gameSection.classList.contains('hidden')) return false;
-    if (gameState.currentPhase !== 'host') return false;
+    if (!['host', 'infection'].includes(gameState.currentPhase)) return false;
     if (!gameState.isHostControllable) return false;
+    if (gameState.currentPhase === 'infection' && gameState.isPaused) return false;
     if (resultScreen && !resultScreen.classList.contains('hidden')) return false;
     return true;
 }
@@ -312,35 +445,8 @@ document.addEventListener('keydown', (event) => {
     else if (key === 'd') moveHost('right');
 });
 
-// Update environment options based on host type
-function updateEnvironmentOptions(hostType) {
-    const alpineOption = document.getElementById('alpine-option');
-    const envSelect = document.getElementById('environment-type');
-    
-    if (hostType === 'ghost_moth') {
-        // Show alpine meadow option for ghost moth
-        if (alpineOption) {
-            alpineOption.style.display = 'block';
-        }
-        // Set default to alpine meadow for ghost moth
-        if (envSelect) {
-            envSelect.value = 'alpine_meadow';
-        }
-    } else {
-        // Hide alpine meadow for other hosts
-        if (alpineOption) {
-            alpineOption.style.display = 'none';
-        }
-        // Set default to rainforest for other hosts
-        if (envSelect) {
-            envSelect.value = 'rainforest';
-        }
-    }
-}
-
-// Handle host type change
-function onHostChange(hostType) {
-    updateEnvironmentOptions(hostType);
+function updateEnvironmentOptions() {
+    onEnvironmentChange(document.getElementById('environment-type')?.value || 'rainforest');
 }
 
 // Calculate distance between two positions
@@ -383,52 +489,51 @@ function verifyMinimumDistance() {
     console.log(`Host-Nest Distance: ${updatedDistance.toFixed(1)} units (${actualSteps.toFixed(1)} steps)`);
 }
 
-// Host type change handler
 function onHostChange(hostType) {
-    gameState.hostType = hostType;
-    updateEnvironmentOptions(hostType);
-    
-    const fungusSelect = document.getElementById('fungus-type');
+    gameState.hostType = hostType || document.getElementById('host-type')?.value || gameState.hostType;
+    updatePairMatchHint();
+}
+
+function onFungusChange(fungusType) {
+    const pairing = getPairing(fungusType);
     const envSelect = document.getElementById('environment-type');
-    
-    if (hostType === 'ghost_moth') {
-        // Lock to alpine environment and O. sinensis
-        envSelect.innerHTML = '';
-        const alpineOpt = document.createElement('option');
-        alpineOpt.value = 'alpine';
-        alpineOpt.textContent = '🏔️ 高山草甸（自动锁定）';
-        alpineOpt.selected = true;
-        envSelect.appendChild(alpineOpt);
-        
-        fungusSelect.value = 'sinensis';
-        fungusSelect.disabled = true;
-        
-        showScienceFact('🔬 科学事实：冬虫夏草（O. sinensis）只感染鬼天蛾科幼虫，从不感染蚂蚁！');
-        document.body.classList.add('alpine-theme');
-    } else {
-        // Restore normal environments
-        envSelect.innerHTML = '';
-        addEnvironmentOption('rainforest', '🌧️ 热带雨林');
-        addEnvironmentOption('jungle', '🌿 丛林');
-        addEnvironmentOption('dry_forest', '🌵 热带季雨林');
-        
-        fungusSelect.disabled = false;
-        document.body.classList.remove('alpine-theme');
-        hideScienceFact();
+
+    gameState.fungusType = fungusType;
+
+    if (envSelect && !pairing.preferredEnvironments.includes(envSelect.value)) {
+        envSelect.value = pairing.preferredEnvironments[0];
     }
+    document.body.classList.toggle('alpine-theme', fungusType === 'sinensis');
+    updatePairMatchHint();
+    onEnvironmentChange(envSelect?.value || pairing.preferredEnvironments[0]);
 }
 
-function addEnvironmentOption(value, text) {
-    const envSelect = document.getElementById('environment-type');
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = text;
-    envSelect.appendChild(option);
+function updatePairMatchHint() {
+    const hint = document.getElementById('setup-match-hint');
+    const hostSelect = document.getElementById('host-type');
+    if (hostSelect) gameState.hostType = hostSelect.value;
+    if (!hint) return;
+
+    const match = getPairMatch();
+    hint.classList.toggle('setup-hint-success', match.compatible);
+    hint.classList.toggle('setup-hint-warning', !match.compatible);
+    hint.textContent = match.compatible
+        ? `✓ ${match.label}`
+        : `! ${match.label}；这是游戏平衡抽象，不代表真实跨宿主感染`;
 }
 
-function updateEnvironmentOptions(hostType) {
-    // This function is called when host type changes
-    // The actual logic is handled in onHostChange
+function onEnvironmentChange(environment) {
+    gameState.environment = environment;
+    const pairing = getPairing();
+    const status = document.getElementById('env-buff-status');
+    const buff = pairing.environmentBuffs[environment];
+    if (!status) return;
+
+    status.classList.toggle('setup-hint-success', Boolean(buff));
+    status.classList.toggle('setup-hint-warning', !buff);
+    status.textContent = buff
+        ? `✓ 典型自然环境：${buff.label}`
+        : '! 非典型自然环境：不会获得环境 Buff';
 }
 
 function showScienceFact(message) {
@@ -437,6 +542,11 @@ function showScienceFact(message) {
 }
 
 function hideScienceFact() {
+    if (scienceFactHideTimer) {
+        clearTimeout(scienceFactHideTimer);
+        scienceFactHideTimer = null;
+    }
+    scienceFact.innerHTML = '';
     scienceFact.classList.add('hidden');
 }
 
@@ -444,34 +554,22 @@ function hideScienceFact() {
 function onSideChange(side) {
     gameState.playerSide = side;
     
-    // Update UI based on selected side
-    const hostTypeSelect = document.getElementById('host-type');
-    const envSelect = document.getElementById('environment-type');
-    const fungusSelect = document.getElementById('fungus-type');
-    
-    if (side === 'host') {
-        // When playing as host, we might want to pre-configure some defaults
-        hostTypeSelect.disabled = false;
-        envSelect.disabled = false;
-        fungusSelect.disabled = false;
-    } else {
-        // When playing as fungus, all options are available
-        hostTypeSelect.disabled = false;
-        envSelect.disabled = false;
-        fungusSelect.disabled = false;
-    }
 }
 
 // Start the game
 function startGame(options = {}) {
     if (autoDemo.active && !options.fromAutoDemo) return;
+    resetInfectionArtifacts();
     const envSelect = document.getElementById('environment-type');
     const fungusSelect = document.getElementById('fungus-type');
+    const hostSelect = document.getElementById('host-type');
     const sideSelect = document.getElementById('player-side');
     
     gameState.environment = envSelect.value;
     gameState.fungusType = fungusSelect.value;
+    gameState.hostType = hostSelect.value;
     gameState.playerSide = sideSelect.value;
+    resetV1HostAbilities();
     
     // Initialize random positions for host and nest
     initializeRandomPositions();
@@ -515,8 +613,13 @@ function initializeMap() {
 // Handle map clicks for spore placement
 function handleMapClick(event, layer) {
     if (gameState.currentPhase !== 'fungus') return;
-    if (gameState.spores.length >= 10) {
-        alert('孢子数量已达上限（10个）');
+    const rule = getSporeRule();
+    if (!rule.allowedLayers.includes(layer)) {
+        alert(`${getFungusTypeName(gameState.fungusType)} 不能在${['地面层', '植被层', '树冠层'][layer]}部署孢子。`);
+        return;
+    }
+    if (gameState.spores.length >= rule.targetCount) {
+        alert(`孢子数量已达上限（${rule.targetCount}个）`);
         return;
     }
     
@@ -535,7 +638,7 @@ function renderSpore(spore) {
     const grid = document.querySelector(`#layer-${spore.layer} .grid`);
     const sporeElement = document.createElement('div');
     sporeElement.className = `spore spore-layer-${spore.layer}`;
-    if (gameState.hostType === 'ghost_moth') {
+    if (gameState.fungusType === 'sinensis') {
         sporeElement.classList.add('spore-ghost-moth');
     }
     sporeElement.style.left = `${spore.x}%`;
@@ -546,6 +649,8 @@ function renderSpore(spore) {
 // Update spore count display
 function updateSporeCount() {
     sporeCountElement.textContent = gameState.spores.length;
+    const limit = document.getElementById('spore-limit');
+    if (limit) limit.textContent = getSporeRule().targetCount;
 }
 
 // Clear all spores from the map
@@ -593,6 +698,7 @@ async function generateAISpores() {
 
 function buildFungusAIStrategyContext() {
     const nestPosition = gameState.nestPosition || { x: 70, y: 70, layer: 0 };
+    const rule = getSporeRule();
     return {
         hostType: getHostTypeName(gameState.hostType),
         environment: getEnvironmentName(gameState.environment),
@@ -601,6 +707,9 @@ function buildFungusAIStrategyContext() {
         mapSize: { width: 100, height: 100 },
         layerNames: ['地面层', '植被层', '树冠层'],
         maxSteps: gameState.maxSteps,
+        sporeCount: rule.targetCount,
+        allowedLayers: rule.allowedLayers,
+        requiredLayerCounts: rule.requiredLayerCounts,
         stepSize: 5,
         nestPosition: {
             x: round1(nestPosition.x ?? 70),
@@ -613,6 +722,7 @@ function buildFungusAIStrategyContext() {
 
 // Call GLM-5 API
 async function callGLMAPI(context) {
+    const allowedLayerText = context.allowedLayers.join('/');
     const prompt = `
 你是一个虫草菌（Ophiocordyceps）部署策略专家。你的目标是在不知道宿主出生点的公平规则下，做区域覆盖式孢子布阵。
 
@@ -624,14 +734,14 @@ async function callGLMAPI(context) {
 
 【硬性约束（必须严格满足）】
 1) 只输出 JSON，禁止输出任何解释/多余文字/Markdown/代码块标记。
-2) 必须生成且仅生成 10 个孢子：deployments 数组长度必须为 10。
+2) 必须生成且仅生成 ${context.sporeCount} 个孢子：deployments 数组长度必须为 ${context.sporeCount}。
 3) “未知出生点覆盖”：围绕巢穴外围、地图四个方向入口、不同层级做覆盖式布阵，不要围绕某个已知起点布雷。
 4) “巢穴周边拦截”：至少 5 个孢子应分布在巢穴周边约 12~35 坐标单位的环形区域内，覆盖上下左右和斜向接近方向。
-5) “层级分散”：除特殊宿主外，不能全部堆在一层，至少覆盖 2 个层级；优先覆盖巢穴层，并用其他层做换层干扰。
+5) 只允许使用 layer ${allowedLayerText}；在允许多个图层时尽量分散。
 6) 坐标范围：x、y 均为 0~100（可带 1 位小数），layer 只能是 0/1/2。
 7) 反聚集：同一层内任意两个孢子之间的欧式距离尽量 ≥ 16（至少 ≥ 12），避免一团集中导致绕开很容易。
 8) 避免重复：不同层间不能有重复的坐标。
-9) 特殊宿主限制：如果宿主类型是“鬼天蛾”（ghost_moth），所有孢子必须部署在地面层（layer 0）。
+9) 必须满足最低图层数量：${JSON.stringify(context.requiredLayerCounts)}。
 
 【游戏上下文（输入）】
 - 宿主类型: ${context.hostType}
@@ -644,7 +754,7 @@ async function callGLMAPI(context) {
 - 公平性规则: ${context.fairnessRule}
 
 【输出格式（严格）】
-{"deployments":[{"layer":0,"x":50.0,"y":50.0}, ... 共10个 ]}
+{"deployments":[{"layer":0,"x":50.0,"y":50.0}, ... 共${context.sporeCount}个 ]}
 `;
     
     try {
@@ -798,6 +908,7 @@ function normalizeLayer(value, fallback = 0) {
 function getSporeStrategyContext(context = {}) {
     const nestPosition = context.nestPosition || gameState.nestPosition || { x: 70, y: 70, layer: 0 };
     const hostTypeKey = context.hostTypeKey || gameState.hostType;
+    const rule = getSporeRule();
     return {
         nestPosition: {
             x: clampNumber(nestPosition.x, 0, 100, 70),
@@ -805,17 +916,20 @@ function getSporeStrategyContext(context = {}) {
             layer: normalizeLayer(nestPosition.layer, 0)
         },
         hostType: hostTypeKey,
-        isGhostMoth: hostTypeKey === 'ghost_moth'
+        isGhostMoth: hostTypeKey === 'ghost_moth',
+        targetCount: Number(context.sporeCount || rule.targetCount),
+        allowedLayers: Array.isArray(context.allowedLayers) ? context.allowedLayers : rule.allowedLayers,
+        requiredLayerCounts: context.requiredLayerCounts || rule.requiredLayerCounts
     };
 }
 
 function getPrimarySporeLayers(ctx) {
-    if (ctx.isGhostMoth) return [0];
-    return [ctx.nestPosition.layer];
+    if (ctx.allowedLayers.length === 1) return ctx.allowedLayers.slice();
+    return [ctx.allowedLayers.includes(ctx.nestPosition.layer) ? ctx.nestPosition.layer : ctx.allowedLayers[0]];
 }
 
-function getOtherSporeLayers(primaryLayers) {
-    return [0, 1, 2].filter((layer) => !primaryLayers.includes(layer));
+function getOtherSporeLayers(primaryLayers, allowedLayers = [0, 1, 2]) {
+    return allowedLayers.filter((layer) => !primaryLayers.includes(layer));
 }
 
 function sporeDistance(a, b) {
@@ -867,7 +981,7 @@ function repairSporeSpacing(spore, spores, ctx) {
     for (let attempt = 0; attempt < 10; attempt++) {
         if (!isTooCloseToSameLayer(repaired, spores)) return repaired;
         repaired = jitterSpore(repaired, 6 + attempt * 1.5);
-        if (ctx.isGhostMoth) repaired.layer = 0;
+        if (!ctx.allowedLayers.includes(repaired.layer)) repaired.layer = ctx.allowedLayers[0];
     }
     return repaired;
 }
@@ -885,28 +999,22 @@ function buildCoverageSpore(layer, ctx, angleDeg, radius = 24) {
 function buildFallbackSporeDeployment(context = {}) {
     const ctx = getSporeStrategyContext(context);
     const primaryLayers = getPrimarySporeLayers(ctx);
-    const otherLayers = ctx.isGhostMoth ? [] : getOtherSporeLayers(primaryLayers);
-    const targetLayers = ctx.isGhostMoth ? [0] : [...primaryLayers, ...otherLayers];
-    const coveragePattern = [
-        { angle: 0, radius: 18 },
-        { angle: 45, radius: 25 },
-        { angle: 90, radius: 18 },
-        { angle: 135, radius: 28 },
-        { angle: 180, radius: 18 },
-        { angle: 225, radius: 25 },
-        { angle: 270, radius: 18 },
-        { angle: 315, radius: 28 },
-        { angle: 20, radius: 36 },
-        { angle: 200, radius: 36 }
-    ];
+    const otherLayers = getOtherSporeLayers(primaryLayers, ctx.allowedLayers);
+    const targetLayers = [...primaryLayers, ...otherLayers];
+    const coveragePattern = Array.from({ length: ctx.targetCount }, (_, index) => ({
+        angle: (360 / ctx.targetCount) * index,
+        radius: index % 3 === 0 ? 18 : (index % 3 === 1 ? 27 : 36)
+    }));
     const spores = [];
 
     coveragePattern.forEach((point, index) => {
-        const layer = targetLayers[index % targetLayers.length];
+        const requiredLayers = Object.entries(ctx.requiredLayerCounts)
+            .flatMap(([layer, count]) => Array(Number(count)).fill(Number(layer)));
+        const layer = requiredLayers[index] ?? targetLayers[index % targetLayers.length];
         spores.push(repairSporeSpacing(buildCoverageSpore(layer, ctx, point.angle, point.radius), spores, ctx));
     });
 
-    return spores.slice(0, 10).map((spore) => ({
+    return spores.slice(0, ctx.targetCount).map((spore) => ({
         layer: spore.layer,
         x: round1(spore.x),
         y: round1(spore.y)
@@ -914,18 +1022,31 @@ function buildFallbackSporeDeployment(context = {}) {
 }
 
 function balanceSporeLayers(spores, ctx) {
-    if (ctx.isGhostMoth) {
-        return spores.map((spore) => ({ ...spore, layer: 0 }));
-    }
+    let balanced = spores.map((spore) => ({
+        ...spore,
+        layer: ctx.allowedLayers.includes(spore.layer) ? spore.layer : ctx.allowedLayers[0]
+    }));
 
-    const layers = getLayerCounts(spores);
+    Object.entries(ctx.requiredLayerCounts).forEach(([layerText, required]) => {
+        const layer = Number(layerText);
+        let current = balanced.filter((spore) => spore.layer === layer).length;
+        for (let index = balanced.length - 1; current < required && index >= 0; index--) {
+            if (balanced[index].layer !== layer) {
+                balanced[index] = { ...balanced[index], layer };
+                current += 1;
+            }
+        }
+    });
+
+    if (ctx.allowedLayers.length === 1) return balanced;
+    const layers = getLayerCounts(balanced);
     const occupiedLayers = Object.values(layers).filter((count) => count > 0).length;
-    if (occupiedLayers > 1) return spores;
+    if (occupiedLayers > 1) return balanced;
 
     const primaryLayers = getPrimarySporeLayers(ctx);
-    const otherLayers = getOtherSporeLayers(primaryLayers);
+    const otherLayers = getOtherSporeLayers(primaryLayers, ctx.allowedLayers);
     const targetLayers = [...primaryLayers, ...otherLayers].slice(0, 3);
-    return spores.map((spore, index) => (
+    return balanced.map((spore, index) => (
         index < targetLayers.length
             ? { ...spore, layer: targetLayers[index] }
             : spore
@@ -946,7 +1067,9 @@ function normalizeSporeDeployments(deployments, context = {}) {
         }
         const fallbackSpore = fallback[index % fallback.length];
         const spore = {
-            layer: ctx.isGhostMoth ? 0 : normalizeLayer(item.layer, fallbackSpore.layer),
+            layer: ctx.allowedLayers.includes(normalizeLayer(item.layer, fallbackSpore.layer))
+                ? normalizeLayer(item.layer, fallbackSpore.layer)
+                : fallbackSpore.layer,
             x: clampNumber(item.x, 0, 100, fallbackSpore.x),
             y: clampNumber(item.y, 0, 100, fallbackSpore.y)
         };
@@ -959,7 +1082,7 @@ function normalizeSporeDeployments(deployments, context = {}) {
         });
     });
 
-    while (normalized.length < 10) {
+    while (normalized.length < ctx.targetCount) {
         const repaired = repairSporeSpacing(fallback[normalized.length % fallback.length], normalized, ctx);
         normalized.push({
             layer: repaired.layer,
@@ -969,16 +1092,16 @@ function normalizeSporeDeployments(deployments, context = {}) {
         repairedCount += 1;
     }
 
-    let finalSpores = balanceSporeLayers(normalized.slice(0, 10), ctx);
+    let finalSpores = balanceSporeLayers(normalized.slice(0, ctx.targetCount), ctx);
     const defenseZoneCount = finalSpores.filter((spore) => isNearNestDefenseZone(spore, ctx)).length;
     if (defenseZoneCount < 5) {
         finalSpores = fallback;
-        repairedCount += 10;
+        repairedCount += ctx.targetCount;
     }
 
     autoDemo.lastSporeValidationSummary = repairedCount > 0
-        ? `公平布阵校验：未读取宿主出生点，已自动修复 ${repairedCount} 个布阵点，保证 10 个孢子、多方向覆盖和层级分散。`
-        : '公平布阵校验通过：未读取宿主出生点，10 个孢子已按巢穴周边、多方向覆盖和层级分散布置。';
+        ? `公平布阵校验：未读取宿主出生点，已自动修复 ${repairedCount} 个布阵点，保证 ${ctx.targetCount} 个孢子符合配对图层规则。`
+        : `公平布阵校验通过：未读取宿主出生点，${ctx.targetCount} 个孢子符合配对图层规则。`;
 
     return finalSpores;
 }
@@ -1008,10 +1131,18 @@ function randomSporeDeploymentForHost() {
 }
 
 function ensureValidSporeDeployment() {
-    if (gameState.spores.length === 10) return true;
+    const targetCount = getSporeRule().targetCount;
+    const normalizedCurrent = normalizeSporeDeployments(gameState.spores, buildFungusAIStrategyContext());
+    const alreadyValid = gameState.spores.length === targetCount &&
+        normalizedCurrent.every((spore, index) => (
+            spore.layer === gameState.spores[index].layer &&
+            spore.x === round1(gameState.spores[index].x) &&
+            spore.y === round1(gameState.spores[index].y)
+        ));
+    if (alreadyValid) return true;
 
     const originalCount = gameState.spores.length;
-    const repairedSpores = normalizeSporeDeployments(gameState.spores, buildFungusAIStrategyContext());
+    const repairedSpores = normalizedCurrent;
     clearSpores();
     repairedSpores.forEach((spore) => {
         gameState.spores.push(spore);
@@ -1020,15 +1151,15 @@ function ensureValidSporeDeployment() {
     updateSporeCount();
 
     const message = originalCount === 0
-        ? '已使用公平 fallback 自动生成 10 个孢子。'
-        : `已将 ${originalCount} 个孢子自动修复/补齐为 10 个孢子。`;
+        ? `已使用公平 fallback 自动生成 ${targetCount} 个孢子。`
+        : `已将 ${originalCount} 个孢子自动修复/补齐为 ${targetCount} 个孢子。`;
     autoDemo.lastSporeValidationSummary = `${autoDemo.lastSporeValidationSummary || '公平布阵校验完成。'} ${message}`;
     if (!autoDemo.active && scienceFact) {
         scienceFact.textContent = message;
         scienceFact.classList.remove('hidden');
     }
 
-    return gameState.spores.length === 10;
+    return gameState.spores.length === targetCount;
 }
 
 // Confirm spore deployment and move to host phase
@@ -1096,7 +1227,7 @@ function startFungusPhase() {
     hostControls.classList.add('hidden');
     infectionControls.classList.add('hidden');
     timerDisplay.classList.remove('hidden');
-    survivalCounter.classList.add('hidden');
+    updateV1RuleSummary();
     
     if (switchSideBtn) {
         switchSideBtn.classList.remove('hidden');
@@ -1119,9 +1250,7 @@ function startFungusPhase() {
         
         if (gameState.timeRemaining <= 0) {
             clearInterval(gameState.timer);
-            if (gameState.spores.length === 0) {
-                randomSporeDeployment();
-            }
+            ensureValidSporeDeployment();
             // Hide spores from host, show host and nest
             toggleSporeVisibility(false);
             showHostIndicator();
@@ -1137,7 +1266,7 @@ function startHostPhase() {
     timerDisplay.classList.add('hidden');
     
     gameState.currentPhase = 'host';
-    currentPhase.textContent = '【宿主方回合】15步内抵达巢穴或避免感染';
+    currentPhase.textContent = '【宿主回巢】在步数归零前抵达巢穴';
     fungusControls.classList.add('hidden');
     hostControls.classList.remove('hidden');
     infectionControls.classList.add('hidden');
@@ -1158,22 +1287,109 @@ function startHostPhase() {
         removeNestIndicatorFromMap();
     }
     
-    // Update energy display
-    safeElement(energyLevelElement, (el) => {
-        el.textContent = gameState.energy;
-    });
-    
     // Update layer display text based on current host layer
     if (currentLayerElement) {
         const layerNames = ['地面层', '植被层', '树冠层'];
         currentLayerElement.textContent = layerNames[gameState.hostPosition.layer] || '地面层';
     }
     
-    // Initialize step counter
     gameState.stepsTaken = 0;
-    safeElement(document.getElementById('step-count'), (el) => {
-        el.textContent = gameState.stepsTaken;
-    });
+    updateHostStatusUI();
+}
+
+function resetV1HostAbilities() {
+    gameState.stepsTaken = 0;
+    gameState.isInfectionMode = false;
+    gameState.isHostControllable = true;
+    gameState.firstLayerChangeFree = gameState.hostType === 'camponotus';
+    gameState.groomUsed = false;
+    gameState.pendingExposure = false;
+    gameState.burrowArmed = false;
+    gameState.burrowCooldownMoves = 0;
+    gameState.groundDashArmed = false;
+    gameState.groundDashUsed = false;
+    gameState.sanitizeUsesRemaining = gameState.hostType === 'atta' ? 2 : 0;
+    gameState.exposureCount = 0;
+}
+
+function getStepsRemaining() {
+    return Math.max(0, gameState.maxSteps - gameState.stepsTaken);
+}
+
+function updateV1RuleSummary() {
+    const summary = document.getElementById('deployment-summary');
+    const rule = getSporeRule();
+    const match = getPairMatch();
+    const buffText = rule.buff ? rule.buff.label : '无（非典型自然环境）';
+    if (summary) {
+        summary.textContent = [
+            `真菌：${getFungusTypeName(gameState.fungusType)}`,
+            `宿主：${getHostTypeName(gameState.hostType)}`,
+            `环境：${getEnvironmentName(gameState.environment)}`,
+            `基础孢子：${getPairing().baseSporeLabel}`,
+            `可部署图层：${rule.allowedLayers.map((layer) => ['地面', '植被', '树冠'][layer]).join('／')}`,
+            `环境 Buff：${buffText}`,
+            `${match.compatible ? '配对 Buff' : '配对 Debuff'}：${match.label}`,
+            '注：接触次数与不匹配组合均为游戏平衡抽象，不代表现实中的精确孢子剂量或自然感染记录。'
+        ].join('\n');
+    }
+    updateSporeCount();
+}
+
+function updateHostStatusUI() {
+    if (stepCountElement) stepCountElement.textContent = getStepsRemaining();
+    const skillStatus = document.getElementById('host-skill-status');
+    const burrowBtn = document.getElementById('burrow-btn');
+    const groundDashBtn = document.getElementById('ground-dash-btn');
+    const sanitizeBtn = document.getElementById('sanitize-btn');
+    [burrowBtn, groundDashBtn, sanitizeBtn].forEach((button) => button?.classList.add('hidden'));
+
+    if (gameState.currentPhase === 'infection') {
+        hostStepStatusElement?.classList.add('hidden');
+        if (skillStatus) {
+            skillStatus.textContent = gameState.isPaused
+                ? `感染观察已暂停｜已收集食物 ${gameState.foodCollected || 0}`
+                : `感染观察移动：方向键或 WASD 自由移动，不消耗回巢步数｜已收集食物 ${gameState.foodCollected || 0}`;
+        }
+        return;
+    }
+
+    hostStepStatusElement?.classList.remove('hidden');
+
+    if (gameState.hostType === 'camponotus') {
+        if (skillStatus) {
+            skillStatus.textContent = `Groom：${gameState.groomUsed ? '已使用' : '可使用'}｜首次切层：${gameState.firstLayerChangeFree ? '免费' : '已使用'}｜有效接触：${gameState.exposureCount}/${getPairMatch().requiredContacts}`;
+        }
+    } else if (gameState.hostType === 'ponerine') {
+        if (skillStatus) {
+            skillStatus.textContent = `Ground Dash：${gameState.groundDashUsed ? '已使用' : (gameState.groundDashArmed ? '已选择方向模式' : '可使用')}｜不能进入树冠｜有效接触：${gameState.exposureCount}/${getPairMatch().requiredContacts}`;
+        }
+        if (groundDashBtn) {
+            groundDashBtn.classList.remove('hidden');
+            groundDashBtn.disabled = gameState.groundDashUsed;
+            groundDashBtn.classList.toggle('active', gameState.groundDashArmed);
+        }
+    } else if (gameState.hostType === 'atta') {
+        if (skillStatus) {
+            skillStatus.textContent = `Sanitize：剩余 ${gameState.sanitizeUsesRemaining}/2 次（每次消耗 1 步）｜有效接触：${gameState.exposureCount}/${getPairMatch().requiredContacts}`;
+        }
+        if (sanitizeBtn) {
+            sanitizeBtn.classList.remove('hidden');
+            sanitizeBtn.disabled = gameState.sanitizeUsesRemaining <= 0;
+        }
+    } else {
+        const cooldown = gameState.burrowCooldownMoves;
+        if (skillStatus) {
+            skillStatus.textContent = cooldown > 0
+                ? `Burrow：冷却中（还需普通移动 ${cooldown} 次）｜有效接触：${gameState.exposureCount}/${getPairMatch().requiredContacts}`
+                : `Burrow：${gameState.burrowArmed ? '已选择方向模式' : '可使用'}｜有效接触：${gameState.exposureCount}/${getPairMatch().requiredContacts}`;
+        }
+        if (burrowBtn) {
+            burrowBtn.classList.remove('hidden');
+            burrowBtn.disabled = cooldown > 0;
+            burrowBtn.classList.toggle('active', gameState.burrowArmed);
+        }
+    }
 }
 
 // Remove strategy selection functions as they are no longer needed
@@ -1214,105 +1430,192 @@ function setupMovementControls() {
 
 // Move host with controllability check
 function moveHost(direction) {
-    // Check if host is controllable
-    if (!gameState.isHostControllable) {
-        if (scienceFact) {
-            scienceFact.textContent = '⚠️ 第4阶段：宿主暂时无法移动！';
-            scienceFact.classList.remove('hidden');
-            setTimeout(() => {
-                if (scienceFact) {
-                    scienceFact.classList.add('hidden');
-                }
-            }, 2000);
-        }
+    const isInfectionMove = canInfectedHostAct();
+    if (!canHostAct() && !isInfectionMove) return;
+    const isBurrow = !isInfectionMove && gameState.hostType === 'ghost_moth' && gameState.burrowArmed;
+    const isGroundDash = !isInfectionMove && gameState.hostType === 'ponerine' && gameState.groundDashArmed;
+    const distance = (isBurrow || isGroundDash) ? 10 : 5;
+    const projected = projectDirectionalMove(gameState.hostPosition, direction, distance);
+    if (projected.x === gameState.hostPosition.x && projected.y === gameState.hostPosition.y) {
+        showScienceFact('不能越过地图边界。');
         return;
     }
-    
-    const stepSize = 5;
-    
-    switch (direction) {
-        case 'up':
-            gameState.hostPosition.y = Math.max(0, gameState.hostPosition.y - stepSize);
-            break;
-        case 'down':
-            gameState.hostPosition.y = Math.min(100, gameState.hostPosition.y + stepSize);
-            break;
-        case 'left':
-            gameState.hostPosition.x = Math.max(0, gameState.hostPosition.x - stepSize);
-            break;
-        case 'right':
-            gameState.hostPosition.x = Math.min(100, gameState.hostPosition.x + stepSize);
-            break;
+    if (isBurrow && burrowCrossesNest(gameState.hostPosition, projected)) {
+        showScienceFact('Burrow 不能直接穿过巢穴。');
+        return;
     }
-    
-    // Ensure stepsTaken doesn't go negative
-    gameState.stepsTaken = Math.max(0, gameState.stepsTaken + 1);
-    if (stepCountElement) {
-        stepCountElement.textContent = gameState.stepsTaken;
+
+    gameState.hostPosition = projected;
+    if (isInfectionMove) {
+        updateHostIndicator();
+        if (checkForFoodAtPosition()) gameState.foodCollected += 1;
+        updateHostStatusUI();
+        return;
+    }
+
+    gameState.stepsTaken += 1;
+    if (isBurrow) {
+        gameState.burrowArmed = false;
+        gameState.burrowCooldownMoves = 3;
+    } else if (isGroundDash) {
+        gameState.groundDashArmed = false;
+        gameState.groundDashUsed = true;
+    } else if (gameState.hostType === 'ghost_moth' && gameState.burrowCooldownMoves > 0) {
+        gameState.burrowCooldownMoves -= 1;
     }
     updateHostIndicator();
-    
-    // Check for spore encounter (automatic survival mode)
-    if (!gameState.isInfectionMode && checkForSporeAtPosition(gameState.hostPosition)) {
-        enterInfectionMode();
+    updateHostStatusUI();
+    settleHostAction();
+}
+
+function canHostAct() {
+    return gameState.currentPhase === 'host' &&
+        gameState.isHostControllable &&
+        !gameState.isInfectionMode &&
+        gameState.stepsTaken < gameState.maxSteps;
+}
+
+function canInfectedHostAct() {
+    return gameState.currentPhase === 'infection' &&
+        gameState.isInfectionMode &&
+        gameState.isHostControllable &&
+        !gameState.isPaused;
+}
+
+function projectDirectionalMove(position, direction, distance = 5) {
+    const projected = { ...position };
+    if (direction === 'up') projected.y = Math.max(0, position.y - distance);
+    if (direction === 'down') projected.y = Math.min(100, position.y + distance);
+    if (direction === 'left') projected.x = Math.max(0, position.x - distance);
+    if (direction === 'right') projected.x = Math.min(100, position.x + distance);
+    return projected;
+}
+
+function burrowCrossesNest(start, finish) {
+    if (start.layer !== gameState.nestPosition.layer) return false;
+    return distanceToSegment(gameState.nestPosition, start, finish) < 3 &&
+        calculateDistance(finish, gameState.nestPosition) >= 8;
+}
+
+function activateBurrow() {
+    if (gameState.hostType !== 'ghost_moth' || !canHostAct()) return;
+    if (gameState.burrowCooldownMoves > 0) {
+        showScienceFact(`Burrow 冷却中，还需普通移动 ${gameState.burrowCooldownMoves} 次。`);
         return;
     }
-    
-    // Check for food encounter
-    checkForFoodAtPosition();
-    
-    // 巢穴只在未感染的回巢阶段可触发；感染后巢穴会被移除且不再作为胜利条件。
-    if (!gameState.isInfectionMode) {
-        const distanceToNest = calculateDistance(gameState.hostPosition, gameState.nestPosition);
-        if (distanceToNest < 8) { // Reduced threshold to 8 units (1.6 steps) for more precise detection
-            // Normal avoidance victory - ensure minimum steps for realistic gameplay
-            if (gameState.stepsTaken >= 10) {
-                showResult('host_victory', '规避胜利！宿主在15步内安全抵达巢穴', {
+    gameState.burrowArmed = !gameState.burrowArmed;
+    updateHostStatusUI();
+    showScienceFact(gameState.burrowArmed ? 'Burrow 已准备：请选择一个移动方向。' : '已取消 Burrow。');
+}
+
+function activateGroundDash() {
+    if (gameState.hostType !== 'ponerine' || !canHostAct() || gameState.groundDashUsed) return;
+    if (gameState.hostPosition.layer !== 0) {
+        showScienceFact('Ground Dash 只能在地面层使用。');
+        return;
+    }
+    gameState.groundDashArmed = !gameState.groundDashArmed;
+    updateHostStatusUI();
+    showScienceFact(gameState.groundDashArmed ? 'Ground Dash 已准备：请选择一个移动方向。' : '已取消 Ground Dash。');
+}
+
+function rerenderSpores() {
+    document.querySelectorAll('.spore').forEach((element) => element.remove());
+    gameState.spores.forEach(renderSpore);
+    toggleSporeVisibility(gameState.currentPhase === 'fungus' && gameState.sporesVisible);
+    updateSporeCount();
+}
+
+function removeNearestSporeWithin(radius = 10) {
+    let nearestIndex = -1;
+    let nearestDistance = Infinity;
+    gameState.spores.forEach((spore, index) => {
+        if (spore.layer !== gameState.hostPosition.layer) return;
+        const distance = calculateDistance(spore, gameState.hostPosition);
+        if (distance <= radius && distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestIndex = index;
+        }
+    });
+    if (nearestIndex < 0) return false;
+    gameState.spores.splice(nearestIndex, 1);
+    rerenderSpores();
+    return true;
+}
+
+function activateSanitize() {
+    if (gameState.hostType !== 'atta' || !canHostAct() || gameState.sanitizeUsesRemaining <= 0) return;
+    if (!removeNearestSporeWithin(10)) {
+        showScienceFact('当前或相邻位置没有可清除的孢子，本次 Sanitize 未消耗。');
+        return;
+    }
+    gameState.sanitizeUsesRemaining -= 1;
+    gameState.stepsTaken += 1;
+    updateHostStatusUI();
+    showScienceFact('Sanitize 已清除当前或相邻位置的 1 个孢子，并消耗 1 步。');
+    settleHostAction();
+}
+
+function settleHostAction() {
+    if (calculateDistance(gameState.hostPosition, gameState.nestPosition) < 8) {
+        showResult('host_victory', '宿主胜利！在步数归零前安全抵达巢穴', {
+            steps: gameState.stepsTaken,
+            strategy: '规避'
+        });
+        return;
+    }
+
+    if (checkForSporeAtPosition(gameState.hostPosition) && resolveSporeExposure()) return;
+
+    if (gameState.stepsTaken >= gameState.maxSteps) {
+        showResult('fungus_victory', '真菌胜利！宿主步数归零仍未抵达巢穴', {
+            steps: gameState.stepsTaken,
+            strategy: '路线封锁'
+        });
+    }
+}
+
+function resolveSporeExposure() {
+    if (gameState.hostType === 'camponotus' && !gameState.groomUsed) {
+        gameState.pendingExposure = true;
+        const shouldGroom = autoDemo.active || window.confirm('木蚁接触到孢子。是否使用每局一次的 Groom 取消本次暴露？');
+        gameState.pendingExposure = false;
+        if (shouldGroom) {
+            gameState.groomUsed = true;
+            updateHostStatusUI();
+            showScienceFact('Groom 已使用：本次孢子暴露被清除。');
+            return false;
+        }
+    }
+
+    if (gameState.hostType === 'atta' && gameState.sanitizeUsesRemaining > 0) {
+        const shouldSanitize = autoDemo.active || window.confirm('切叶蚁接触到孢子。是否使用 Sanitize 清除该孢子？使用会消耗 1 步。');
+        if (shouldSanitize && removeNearestSporeWithin(8)) {
+            gameState.sanitizeUsesRemaining -= 1;
+            gameState.stepsTaken += 1;
+            updateHostStatusUI();
+            showScienceFact('Sanitize 已清除接触到的孢子，本次暴露不计入感染。');
+            if (gameState.stepsTaken >= gameState.maxSteps) {
+                showResult('fungus_victory', '真菌胜利！Sanitize 后步数归零，宿主未能回巢', {
                     steps: gameState.stepsTaken,
-                    strategy: '规避'
+                    strategy: '路线封锁'
                 });
-            } else {
-                // If reached nest in less than 10 steps, force additional movement or convert to different victory
-                if (scienceFact) {
-                    scienceFact.textContent = '⚠️ 检测到异常：宿主在少于10步内抵达巢穴。请继续移动以完成完整规避路径。';
-                    scienceFact.classList.remove('hidden');
-                    setTimeout(() => {
-                        if (scienceFact) {
-                            scienceFact.classList.add('hidden');
-                        }
-                    }, 3000);
-                }
-                // Don't trigger victory yet - require minimum 10 steps for avoidance strategy
-                return;
+                return true;
             }
-            return;
+            return false;
         }
     }
-    
-    // Check if steps exceeded - enter survival mode instead of defeat
-    if (!gameState.isInfectionMode && gameState.stepsTaken >= gameState.maxSteps) {
-        // Show warning for automatic survival mode
-        if (scienceFact) {
-            scienceFact.textContent = '⚠️ 规避失败！宿主未能在15步内抵达巢穴，自动进入感染生存模式。';
-            scienceFact.classList.remove('hidden');
-            
-            // Auto-hide the warning after 5 seconds
-            setTimeout(() => {
-                if (scienceFact) {
-                    scienceFact.classList.add('hidden');
-                }
-            }, 5000);
-        }
-        
-        // Automatically enter survival mode when step limit is reached
-        enterInfectionMode();
-        return;
+
+    gameState.exposureCount += 1;
+    const requiredContacts = getPairMatch().requiredContacts;
+    updateHostStatusUI();
+    if (gameState.exposureCount < requiredContacts) {
+        showScienceFact(`发生 1 次有效接触：当前 ${gameState.exposureCount}/${requiredContacts}，尚未达到感染阈值。`);
+        return false;
     }
-    
-    // If already infected, check for additional step-based survival time reduction
-    if (gameState.isInfectionMode) {
-        checkInfectedStepPenalty();
-    }
+
+    enterInfectionMode();
+    return true;
 }
 
 // Update host indicator position
@@ -1359,7 +1662,7 @@ function updateNestIndicator() {
 function showHostIndicator() {
     if (hostIndicator) {
         hostIndicator.classList.remove('hidden');
-        hostIndicator.textContent = '🪳'; // Host emoji
+        hostIndicator.textContent = gameState.hostType === 'ghost_moth' ? '🐛' : '🐜';
         updateHostIndicator();
     }
 }
@@ -1398,32 +1701,16 @@ function toggleSporeVisibility(visible) {
     });
 }
 
-// Enter infection mode when host touches spore or exceeds step limit
+// Enter infection mode after a valid spore exposure.
 function enterInfectionMode() {
     gameState.isInfectionMode = true;
+    gameState.currentPhase = 'infection';
     gameState.infectionStep = gameState.stepsTaken;
-    // 新规则：感染后不回巢穴；宿主需在感染状态下生存满 15 天获胜
-    gameState.infectionGoalDays = 15;
-    gameState.infectionDaysSurvived = 0;
-    gameState.infectionPenaltyCyclesApplied = 0;
-    gameState.infectionLastTickTs = 0;
-
-    // 生命值（可被食物补充、可被移动惩罚削减）
-    gameState.maxSurvivalDays = calculateMaxSurvivalDays();
-    gameState.infectionHealthDays = gameState.maxSurvivalDays;
-    gameState.gameDay = 0;
-    gameState.currentInfectionStage = 1; // Start at stage 1
+    gameState.currentInfectionStage = 1;
     gameState.stageStartTime = Date.now();
+    gameState.stageElapsedMs = 0;
     gameState.isHostControllable = true;
-    
-    // Check for immediate death (alpine meadow with non-ghost moth)
-    if (gameState.maxSurvivalDays <= 0) {
-        showResult('fungus_victory', '感染胜利！宿主在高山草甸环境中立即死亡', {
-            reason: '环境不适应',
-            strategy: '环境致死'
-        });
-        return;
-    }
+    gameState.foodCollected = 0;
     
     // Hide spores completely in infection mode (host shouldn't see them)
     toggleSporeVisibility(false);
@@ -1431,59 +1718,35 @@ function enterInfectionMode() {
     // 感染后巢穴从地图上移除，也不再参与触发或胜利判定。
     removeNestIndicatorFromMap();
     
-    // Show warning message for infection phase start
     if (scienceFact) {
-        scienceFact.textContent = '⚠️ 感染阶段开始！宿主已被真菌感染，不再返回巢穴。目标：在感染状态下生存满15天获得胜利。';
+        const match = getPairMatch();
+        scienceFact.textContent = match.compatible
+            ? `感染成功：${getFungusTypeName(gameState.fungusType)} 达成科学匹配配对，开始展示对应生物学阶段。`
+            : `游戏感染已触发：该组合缺乏可靠自然感染记录，以下阶段仅作机制演示，不代表真实跨宿主感染。`;
         scienceFact.classList.remove('hidden');
-        
-        // Auto-hide the warning after 5 seconds
-        setTimeout(() => {
-            if (scienceFact) {
-                scienceFact.classList.add('hidden');
-            }
-        }, 5000);
     }
-    
-    // Generate initial food items
-    generateFoodItems(3);
-    
-    // Switch to infection controls with safe DOM operations
+
     safeElement(currentPhase, (el) => {
-        el.textContent = '【感染周期】8阶段生存倒计时';
+        el.textContent = getPairMatch().compatible
+            ? '【感染成功】科学匹配感染阶段展示'
+            : '【实验性组合】通用感染机制展示';
     });
-    
+    fungusControls.classList.add('hidden');
+    hostControls.classList.remove('hidden');
     safeElement(infectionControls, (el) => {
         infectionControls.classList.remove('hidden');
     });
+    switchSideBtn?.classList.add('hidden');
+    movementControls?.classList.remove('disabled');
     updateSpeedControlVisibility();
-    
-    safeElement(survivalCounter, (el) => {
-        survivalCounter.classList.remove('hidden');
-    });
-    
-    safeElement(survivalDaysElement, (el) => {
-        el.textContent = gameState.infectionDaysSurvived.toFixed(1);
-    });
 
-    safeElement(healthDaysElement, (el) => {
-        el.textContent = gameState.infectionHealthDays.toFixed(1);
-    });
-    
-    // Show infection stage display
     if (infectionStageElement) {
         infectionStageElement.classList.remove('hidden');
     }
-    
-    // Show real-time counter
-    if (realTimeCounter) {
-        realTimeCounter.classList.remove('hidden');
-    }
-    
-    // Update displays initially
     updateInfectionStageDisplay();
-    updateRealTimeDisplay(Math.max(0, gameState.infectionGoalDays - gameState.infectionDaysSurvived));
-    
-    // Start infection loop (days survived + health decay)
+    generateFoodItems(4);
+    startFoodRefreshLoop();
+    updateHostStatusUI();
     gameState.isPaused = false;
     startInfectionLoop();
 }
@@ -1491,17 +1754,53 @@ function enterInfectionMode() {
 // Remove duplicate calculateDistance function and keep the original one
 // The original calculateDistance is already defined earlier in the file
 
-function generateFoodItems(count) {
+const FOOD_REFRESH_INTERVAL_MS = 15000;
+const FOOD_TARGET_COUNT = 4;
+
+function getHostFoodLayers() {
+    if (gameState.hostType === 'ghost_moth') return [0];
+    if (gameState.hostType === 'camponotus') return [0, 1, 2];
+    return [0, 1];
+}
+
+function clearFoodItems() {
+    document.querySelectorAll('.food-item').forEach((element) => element.remove());
     gameState.foodItems = [];
-    const foodContainer = document.createElement('div');
-    foodContainer.id = 'food-container';
-    document.body.appendChild(foodContainer);
-    
-    for (let i = 0; i < count; i++) {
-        const layer = Math.floor(Math.random() * 3);
-        const x = Math.random() * 100;
-        const y = Math.random() * 100;
-        const food = { layer, x, y, id: `food-${Date.now()}-${i}` };
+}
+
+function stopFoodRefreshLoop() {
+    if (gameState.foodRefreshTimer) {
+        clearInterval(gameState.foodRefreshTimer);
+        gameState.foodRefreshTimer = null;
+    }
+}
+
+function createFoodItem() {
+    const allowedLayers = getHostFoodLayers();
+    for (let attempt = 0; attempt < 80; attempt++) {
+        const layer = allowedLayers[Math.floor(Math.random() * allowedLayers.length)];
+        const candidate = {
+            id: `food-${Date.now()}-${foodSerial++}`,
+            layer,
+            x: 7 + Math.random() * 86,
+            y: 10 + Math.random() * 80,
+            emoji: gameState.hostType === 'ghost_moth'
+                ? '🌱'
+                : ['🍃', '🌰', '💧'][foodSerial % 3]
+        };
+        const farFromHost = layer !== gameState.hostPosition.layer || calculateDistance(candidate, gameState.hostPosition) >= 12;
+        const spacedOut = gameState.foodItems.every((food) => food.layer !== layer || calculateDistance(candidate, food) >= 10);
+        if (farFromHost && spacedOut) return candidate;
+    }
+    return null;
+}
+
+function generateFoodItems(count = FOOD_TARGET_COUNT) {
+    clearFoodItems();
+    const targetCount = Math.max(0, Number(count) || 0);
+    while (gameState.foodItems.length < targetCount) {
+        const food = createFoodItem();
+        if (!food) break;
         gameState.foodItems.push(food);
         renderFoodItem(food);
     }
@@ -1509,134 +1808,71 @@ function generateFoodItems(count) {
 
 // Render a food item on the map
 function renderFoodItem(food) {
-    const foodElement = document.createElement('div');
-    foodElement.className = 'food-item';
-    foodElement.id = food.id;
-    foodElement.textContent = '🍎'; // Food emoji
-    
-    // Find the correct grid for this food item's layer
     const grid = document.querySelector(`#layer-${food.layer} .grid`);
-    if (!grid) {
-        console.error('Grid not found for food layer:', food.layer);
-        return;
-    }
-    
-    // Position relative to the grid
-    const rect = grid.getBoundingClientRect();
-    const left = (rect.width * food.x / 100);
-    const top = (rect.height * food.y / 100);
-    
-    foodElement.style.left = `${left}px`;
-    foodElement.style.top = `${top}px`;
-    foodElement.style.position = 'absolute';
-    foodElement.style.transform = 'translate(-50%, -50%)';
-    
-    // Append to the correct grid
+    if (!grid) return;
+    const foodElement = document.createElement('div');
+    foodElement.id = food.id;
+    foodElement.className = 'food-item';
+    foodElement.textContent = food.emoji || '🍃';
+    foodElement.setAttribute('role', 'img');
+    foodElement.setAttribute('aria-label', '生态食物');
+    foodElement.title = '生态食物（每 15 秒或进入新阶段刷新）';
+    foodElement.style.left = `${food.x}%`;
+    foodElement.style.top = `${food.y}%`;
     grid.appendChild(foodElement);
 }
 
 // Check for food at current position
 function checkForFoodAtPosition() {
-    const remainingFood = [];
-    let foodCollected = false;
-    
-    gameState.foodItems.forEach(food => {
-        if (food.layer === gameState.hostPosition.layer &&
-            Math.abs(food.x - gameState.hostPosition.x) < 8 &&
-            Math.abs(food.y - gameState.hostPosition.y) < 8) {
-            // Collect food
-            foodCollected = true;
-            gameState.energy += 1;
-            if (energyLevelElement) {
-                energyLevelElement.textContent = gameState.energy;
-            }
-            // Add 0.5 days to survival time, but ensure it doesn't exceed maximum
-            if (gameState.isInfectionMode) {
-                const additionalDays = 0.5;
-                const newHealth = gameState.infectionHealthDays + additionalDays;
-                // Cap at reasonable maximum (e.g., 25 days health)
-                gameState.infectionHealthDays = Math.min(25, newHealth);
-                if (healthDaysElement) {
-                    healthDaysElement.textContent = gameState.infectionHealthDays.toFixed(1);
-                }
-                // 更新“距离胜利”实时显示（以目标剩余天数为准）
-                updateRealTimeDisplay(Math.max(0, gameState.infectionGoalDays - gameState.infectionDaysSurvived));
-            }
-            // Remove food element
-            const foodElement = document.getElementById(food.id);
-            if (foodElement) {
-                foodElement.remove();
-            }
-        } else {
-            remainingFood.push(food);
-        }
-    });
-    
-    gameState.foodItems = remainingFood;
-    
-    if (foodCollected) {
-        // Generate new food item
-        const spawnDelay = autoDemo.active ? getDemoDelay(2000) : 2000;
-        const demoToken = autoDemo.token;
-        const timerId = setTimeout(() => {
-            if (autoDemo.active) {
-                autoDemo.timers = autoDemo.timers.filter((item) => item !== timerId);
-                if (demoToken !== autoDemo.token) return;
-            }
-            if (gameState.foodItems.length < 5) { // Max 5 food items
-                const layer = Math.floor(Math.random() * 3);
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                const newFood = { layer, x, y, id: `food-${Date.now()}` };
-                gameState.foodItems.push(newFood);
-                renderFoodItem(newFood);
-            }
-        }, spawnDelay);
-        if (autoDemo.active) trackDemoTimer(timerId);
+    const index = gameState.foodItems.findIndex((food) =>
+        food.layer === gameState.hostPosition.layer &&
+        calculateDistance(food, gameState.hostPosition) < 8
+    );
+    if (index < 0) return false;
+
+    const [collected] = gameState.foodItems.splice(index, 1);
+    document.getElementById(collected.id)?.remove();
+    const replacement = createFoodItem();
+    if (replacement) {
+        gameState.foodItems.push(replacement);
+        renderFoodItem(replacement);
     }
+    return true;
+}
+
+function startFoodRefreshLoop() {
+    stopFoodRefreshLoop();
+    gameState.foodRefreshTimer = setInterval(() => {
+        if (!gameState.isInfectionMode || gameState.isPaused) return;
+        generateFoodItems(FOOD_TARGET_COUNT);
+    }, FOOD_REFRESH_INTERVAL_MS);
 }
 
 function runSimulation() {
-    if (gameState.isPaused || !gameState.isInfectionMode) return;
-    
-    gameState.simulationTimer = setTimeout(() => {
-        gameState.gameDay += 1;
-        gameState.survivalDays = Math.max(0, gameState.survivalDays - 1);
-        survivalDaysElement.textContent = gameState.survivalDays.toFixed(1);
-        
-        // Trigger events at specific days
-        if (gameState.gameDay === 7) {
-            showEvent('⚠️ 子实体开始生长！');
-        }
-        if (gameState.gameDay === 12) {
-            showEvent('⏰ 孢子即将成熟！');
-        }
-        
-        // Check win condition
-        if (gameState.survivalDays <= 0) {
-            showResult('fungus_victory', `🍄 感染胜利！宿主在第${gameState.gameDay}天死亡`, {
-                survivalDays: gameState.gameDay,
-                strategy: '抵抗'
-            });
-            return;
-        }
-        
-        // Continue simulation
-        runSimulation();
-    }, gameState.simulationSpeed);
+    startInfectionLoop();
 }
 
 // Pause simulation
 function pauseSimulation() {
+    if (gameState.isPaused) return;
+    if (gameState.isInfectionMode && gameState.stageStartTime) {
+        gameState.stageElapsedMs = Math.max(0, Date.now() - gameState.stageStartTime);
+    }
     gameState.isPaused = true;
     clearInterval(gameState.simulationTimer);
+    gameState.simulationTimer = null;
+    updateInfectionTimeComparison(gameState.stageElapsedMs);
+    updateHostStatusUI();
 }
 
 // Resume simulation
 function resumeSimulation() {
+    if (!gameState.isPaused && gameState.simulationTimer) return;
     gameState.isPaused = false;
     if (gameState.isInfectionMode) {
+        startFoodRefreshLoop();
         startInfectionLoop();
+        updateHostStatusUI();
     } else {
         runSimulation();
     }
@@ -1647,7 +1883,7 @@ function speedUpSimulation() {
     if (!autoDemo.active) {
         updateSpeedControlVisibility();
         if (scienceFact) {
-            scienceFact.textContent = '玩家手动模式不提供 2 倍速；请正常完成感染抵抗。';
+            scienceFact.textContent = '玩家手动模式按固定速度展示感染阶段；2 倍速仅用于自动演示。';
             scienceFact.classList.remove('hidden');
             setTimeout(() => {
                 if (scienceFact) scienceFact.classList.add('hidden');
@@ -1728,6 +1964,7 @@ function calculateMaxSurvivalDays() {
 function showResult(resultType, message, stats) {
     clearInterval(gameState.timer);
     clearTimeout(gameState.simulationTimer);
+    stopFoodRefreshLoop();
     
     resultScreen.classList.remove('hidden');
     safeElement(resultMessage, (el) => {
@@ -1753,6 +1990,7 @@ function showResult(resultType, message, stats) {
     statsHTML += `<p>• 宿主类型: ${getHostTypeName(gameState.hostType)}</p>`;
     statsHTML += `<p>• 环境: ${getEnvironmentName(gameState.environment)}</p>`;
     statsHTML += `<p>• 真菌类型: ${getFungusTypeName(gameState.fungusType)}</p>`;
+    statsHTML += `<p>• 配对效果: ${getPairMatch().label}</p>`;
     
     if (stats.strategy === '规避') {
         statsHTML += `<p>• 策略: ${stats.strategy}</p>`;
@@ -1783,19 +2021,15 @@ function getHostTypeName(hostType) {
 }
 
 function getEnvironmentName(environment) {
-    const names = {
-        rainforest: '热带雨林',
-        jungle: '丛林',
-        dry_forest: '热带季雨林',
-        alpine: '高山草甸'
-    };
-    return names[environment] || environment;
+    return ENVIRONMENTS[environment]?.name || environment;
 }
 
 function getFungusTypeName(fungusType) {
     const names = {
         unilateralis: 'O. unilateralis',
         kimflemingiae: 'O. kimflemingiae',
+        australis: 'O. australis',
+        metarhizium: 'M. anisopliae',
         sinensis: 'O. sinensis (冬虫夏草)'
     };
     return names[fungusType] || fungusType;
@@ -1809,7 +2043,53 @@ function showLoading(show, message) {
     loadingOverlay.classList.toggle('hidden', !show);
 }
 
-// Infection loop: host wins by surviving 15 days while infected.
+// V1 infection loop: biology display only; infection already determines fungus victory.
+function formatClockDuration(ms) {
+    const totalSeconds = Math.max(0, Math.ceil(Number(ms || 0) / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function getActiveStageDurationMs(fungusType = gameState.fungusType, stage = gameState.currentInfectionStage) {
+    return autoDemo.active ? getAutoDemoInfectionSpeedMs() : getStageDurationMs(fungusType, stage);
+}
+
+function updateInfectionTimeComparison(elapsedMs = null) {
+    if (!infectionTimeComparisonElement) return;
+    if (!gameState.isInfectionMode || gameState.currentPhase !== 'infection') {
+        infectionTimeComparisonElement.classList.add('hidden');
+        return;
+    }
+
+    const stageInfo = getStageInfo(gameState.currentInfectionStage, gameState.fungusType);
+    const stageIndex = Math.max(0, gameState.currentInfectionStage - 1);
+    const stageDurations = autoDemo.active
+        ? Array(getInfectionStageCount()).fill(getAutoDemoInfectionSpeedMs())
+        : getStageDurations(gameState.fungusType, gameState.hostType).stageDurations;
+    const stageDuration = stageDurations[stageIndex] || getActiveStageDurationMs();
+    const elapsed = elapsedMs === null
+        ? Math.max(0, Date.now() - gameState.stageStartTime)
+        : Math.max(0, elapsedMs);
+    const stageRemaining = Math.max(0, stageDuration - elapsed);
+    const laterStagesDuration = stageDurations
+        .slice(stageIndex + 1)
+        .reduce((sum, duration) => sum + duration, 0);
+    const totalRemaining = stageRemaining + laterStagesDuration;
+    const totalDuration = stageDurations.reduce((sum, duration) => sum + duration, 0);
+
+    infectionTimeComparisonElement.classList.remove('hidden');
+    if (infectionNaturalTimeElement) {
+        infectionNaturalTimeElement.textContent = `自然感染周期（示意）：${stageInfo.time}`;
+    }
+    if (infectionSimulationTimeElement) {
+        infectionSimulationTimeElement.textContent = `游戏模拟倒计时：本阶段剩余 ${formatClockDuration(stageRemaining)}｜全程剩余 ${formatClockDuration(totalRemaining)}${gameState.isPaused ? '（已暂停）' : ''}`;
+    }
+    if (infectionTotalTimeElement) {
+        infectionTotalTimeElement.textContent = `完整动画时长：${formatClockDuration(totalDuration)}${autoDemo.active ? '（自动演示）' : ''}`;
+    }
+}
+
 function startInfectionLoop() {
     if (!gameState.isInfectionMode || gameState.isPaused) return;
 
@@ -1819,58 +2099,29 @@ function startInfectionLoop() {
         gameState.simulationTimer = null;
     }
 
-    gameState.infectionLastTickTs = Date.now();
-
+    gameState.stageStartTime = Date.now() - Math.max(0, gameState.stageElapsedMs || 0);
     gameState.simulationTimer = setInterval(() => {
         if (gameState.isPaused || !gameState.isInfectionMode) return;
-
-        const now = Date.now();
-        const dt = Math.max(0, now - (gameState.infectionLastTickTs || now));
-        gameState.infectionLastTickTs = now;
-
-        const dayDelta = dt / (gameState.simulationSpeed || 30000);
-
-        // Progress
-        gameState.infectionDaysSurvived += dayDelta;
-        gameState.infectionHealthDays = Math.max(0, gameState.infectionHealthDays - dayDelta);
-
-        // Stage progress (purely informational): map 0~goalDays -> 1~8
-        const rawStage = Math.min(8, Math.floor((gameState.infectionDaysSurvived / gameState.infectionGoalDays) * 8) + 1);
-        let stage = rawStage;
-        const stageInfo = getStageInfo(stage, gameState.fungusType, gameState.hostType);
-        if (stageInfo && stageInfo.skipped) stage = 7; // sinensis / special skips 4-6
-        if (stage !== gameState.currentInfectionStage) {
-            gameState.currentInfectionStage = stage;
+        const totalStages = getInfectionStageCount();
+        const stageDuration = getActiveStageDurationMs();
+        const elapsed = Date.now() - gameState.stageStartTime;
+        updateInfectionTimeComparison(elapsed);
+        if (elapsed >= stageDuration && gameState.currentInfectionStage < totalStages) {
+            gameState.currentInfectionStage += 1;
+            gameState.stageElapsedMs = 0;
+            gameState.stageStartTime = Date.now();
             updateInfectionStageDisplay();
-        }
-
-        // Update UI
-        if (survivalDaysElement) {
-            survivalDaysElement.textContent = gameState.infectionDaysSurvived.toFixed(1);
-        }
-        if (healthDaysElement) {
-            healthDaysElement.textContent = gameState.infectionHealthDays.toFixed(1);
-        }
-        updateRealTimeDisplay(Math.max(0, gameState.infectionGoalDays - gameState.infectionDaysSurvived));
-
-        // Lose condition: health depleted
-        if (gameState.infectionHealthDays <= 0) {
-            clearInterval(gameState.simulationTimer);
-            gameState.simulationTimer = null;
-            showResult('fungus_victory', `🍄 感染胜利！宿主未能撑过第${gameState.infectionGoalDays}天`, {
-                survivalDays: gameState.infectionDaysSurvived.toFixed(1),
-                strategy: '抵抗'
-            });
+            updateInfectionTimeComparison(0);
+            generateFoodItems(FOOD_TARGET_COUNT);
             return;
         }
-
-        // Win condition: survived long enough
-        if (gameState.infectionDaysSurvived >= gameState.infectionGoalDays) {
+        if (elapsed >= stageDuration && gameState.currentInfectionStage >= totalStages) {
             clearInterval(gameState.simulationTimer);
             gameState.simulationTimer = null;
-            showResult('host_victory', '🏆 生存胜利！宿主在感染状态下坚持了15天', {
-                survivalDays: gameState.infectionGoalDays,
-                strategy: '抵抗'
+            stopFoodRefreshLoop();
+            showResult('fungus_victory', '感染成功！真菌完成感染与孢子释放阶段', {
+                stages: totalStages,
+                strategy: getPairMatch().compatible ? '科学匹配感染' : '实验性组合'
             });
         }
     }, 250);
@@ -1941,14 +2192,9 @@ function tryParseJsonObject(text) {
 
 function buildFunnyTwoLiner(snapshot) {
     const stage = snapshot?.infectionStage ?? snapshot?.currentInfectionStage ?? '?';
-    const sd = snapshot?.daysSurvived ?? snapshot?.survivalDays ?? '?';
     const sp = snapshot?.summary?.sporeCountsByLayer || { 0: 0, 1: 0, 2: 0 };
-    const fd = snapshot?.summary?.foodCountsByLayer || { 0: 0, 1: 0, 2: 0 };
-    const nearestFood = snapshot?.summary?.nearestFoodSameLayer?.distance;
-    const nearestSpore = snapshot?.summary?.nearestSporeSameLayer?.distance;
-
-    const s1 = `当前是感染阶段${stage}：宿主一边数着还剩${sd}天，一边怀疑自己是不是踩到了“真菌版乐高”。`;
-    const s2 = `孢子(0/1/2层)=${sp[0]}/${sp[1]}/${sp[2]}、食物=${fd[0]}/${fd[1]}/${fd[2]}；最近同层食物距${nearestFood ?? '？'}、孢子距${nearestSpore ?? '？'}——这局面，主打一个“跑不跑都刺激”。`;
+    const s1 = `感染已进入阶段${stage}，宿主的回巢挑战正式结束。`;
+    const s2 = `孢子分布为${sp[0]}/${sp[1]}/${sp[2]}，接下来观察真菌生命周期。`;
     return `${s1}\n${s2}`;
 }
 
@@ -1958,6 +2204,157 @@ const AI_MODEL_NAME = 'glm-5';
 const AI_TIMEOUT_MS = 90000;
 const RAG_ASK_ENDPOINT = 'http://127.0.0.1:8002/api/rag/ask';
 const RAG_HEALTH_ENDPOINT = 'http://127.0.0.1:8002/api/rag/health';
+// 本地内容会立即显示；较长超时只用于后台补充，避免冷启动时误判服务失败。
+const RAG_REQUEST_TIMEOUT_MS = 40000;
+const RAG_RETRY_COOLDOWN_MS = 30000;
+let ragUnavailableUntil = 0;
+
+const LOCAL_SCIENCE_FACTS = {
+    unilateralis: {
+        title: 'O. unilateralis 与木蚁',
+        summary: 'O. unilateralis 是与木蚁相关的专化寄生真菌；感染后期可改变宿主活动，并出现附着在植物组织上的“死亡紧咬”。',
+        details: [
+            '孢子需要先附着并穿透宿主体表，感染不会在接触瞬间完成。',
+            '行为改变发生在感染后期；游戏中的一次有效接触是平衡抽象，不等于现实孢子剂量。',
+            '宿主死亡后形成的真菌结构有助于孢子释放，开始下一轮传播。'
+        ]
+    },
+    kimflemingiae: {
+        title: 'O. kimflemingiae 与木蚁',
+        summary: 'O. kimflemingiae 与木蚁宿主相关，模拟器用寻找树枝和树枝紧咬表现其感染后期行为。',
+        details: [
+            '感染包括附着、穿透、体内扩增和宿主死亡后的真菌发育。',
+            '温度、湿度和可供附着的植物结构会影响传播机会。',
+            '游戏把连续的生物过程压缩成阶段动画，时间标签用于对照现实周期与模拟时长。'
+        ]
+    },
+    australis: {
+        title: 'O. australis 与猛蚁',
+        summary: 'O. australis 有感染猛蚁亚科宿主的记录，模拟器将其主要配对设为猛蚁。',
+        details: [
+            '真菌先突破宿主体表，再在体内扩增并完成后续发育。',
+            '模拟中的抓附枝干与子实体形成属于感染结局展示。',
+            '猛蚁不能进入树冠、可使用 Ground Dash，是游戏移动规则，不是感染生物学结论。'
+        ]
+    },
+    metarhizium: {
+        title: 'M. anisopliae 与切叶蚁',
+        summary: 'M. anisopliae 是昆虫病原真菌，可感染切叶蚁；这里展示普通真菌感染，不加入僵尸蚁式行为操控。',
+        details: [
+            '切叶蚁具有清洁和群体卫生等抗真菌防御行为。',
+            '因此游戏设置两次有效接触，并允许 Sanitize 清除孢子。',
+            '接触次数是游戏平衡抽象，不能解释为现实中的精确感染剂量。'
+        ]
+    },
+    sinensis: {
+        title: 'O. sinensis 与鬼天蛾幼虫',
+        summary: 'O. sinensis 与高山环境中的鬼天蛾类幼虫相关，感染后真菌在宿主体内扩增并使其木乃伊化。',
+        details: [
+            '这一配对主要发生在土壤中的幼虫宿主，不使用蚂蚁的攀爬紧咬路径。',
+            '低温环境下的自然感染与发育周期远长于游戏动画。',
+            'Burrow 和地表孢子绕行是游戏移动机制，不代表宿主能够完全避免自然感染。'
+        ]
+    }
+};
+
+const RAG_RELEVANCE_TERMS = {
+    unilateralis: ['unilateralis', 'camponotus', '木蚁', 'death grip', '死亡紧咬'],
+    kimflemingiae: ['kimflemingiae', 'castaneus', 'camponotus castaneus', '树枝紧咬'],
+    australis: ['o. australis', 'ophiocordyceps australis', 'ponerine', 'ponerinae', '猛蚁'],
+    metarhizium: ['metarhizium', 'anisopliae', 'leaf-cutting ant', 'leafcutter', '切叶蚁', '绿僵菌'],
+    sinensis: ['o. sinensis', 'ophiocordyceps sinensis', 'thitarodes', 'ghost moth', '鬼天蛾', '冬虫夏草']
+};
+
+function isRagDataRelevant(data, fungusType = gameState.fungusType) {
+    const terms = RAG_RELEVANCE_TERMS[fungusType] || [];
+    if (!terms.length) return false;
+    const evidenceText = (data?.retrieved || []).map((item) => {
+        const metadata = item.metadata || {};
+        return [
+            item.document,
+            item.chunk_id,
+            metadata.title,
+            metadata.topic,
+            metadata.tags,
+            metadata.source_titles,
+            metadata.source_ids
+        ].filter(Boolean).join(' ');
+    }).join(' ').toLowerCase();
+    return terms.some((term) => evidenceText.includes(term.toLowerCase()));
+}
+
+function getLocalScienceFactKey(question = '') {
+    const normalized = String(question || '').toLowerCase();
+    if (/kimflemingiae|castaneus|树枝紧咬/.test(normalized)) return 'kimflemingiae';
+    if (/australis|ponerine|猛蚁/.test(normalized)) return 'australis';
+    if (/metarhizium|anisopliae|切叶蚁|绿僵菌/.test(normalized)) return 'metarhizium';
+    if (/sinensis|冬虫夏草|鬼天蛾|thitarodes/.test(normalized)) return 'sinensis';
+    if (/unilateralis|death grip|死亡紧咬|木蚁/.test(normalized)) return 'unilateralis';
+    return LOCAL_SCIENCE_FACTS[gameState.fungusType] ? gameState.fungusType : 'unilateralis';
+}
+
+function buildLocalScienceData(question = '') {
+    const key = getLocalScienceFactKey(question);
+    const fact = LOCAL_SCIENCE_FACTS[key];
+    const match = getPairMatch(key, gameState.hostType);
+    const boundary = match.compatible
+        ? '当前真菌与宿主是科学匹配组合。'
+        : '当前组合缺乏可靠自然感染记录；游戏中的额外接触要求是 Debuff 抽象。';
+    const answer = [fact.summary, boundary, ...fact.details].join('\n\n');
+    return {
+        question,
+        source: 'local_verified',
+        answer,
+        query_vector_dim: null,
+        retrieved: [{
+            chunk_id: `local-${key}`,
+            document: `${fact.summary}\n${fact.details.join('\n')}`,
+            metadata: {
+                title: fact.title,
+                source_ids: 'simulator-local-science',
+                topic: key
+            }
+        }]
+    };
+}
+
+async function fetchJsonWithTimeout(url, options = {}, timeoutMs = RAG_REQUEST_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        let data = {};
+        try {
+            data = await response.json();
+        } catch {
+            data = {};
+        }
+        if (!response.ok) {
+            throw new Error(data.message || data.error || `HTTP ${response.status}`);
+        }
+        return data;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+async function requestRagAnswer(question, topK = 4) {
+    if (Date.now() < ragUnavailableUntil) {
+        throw new Error('rag_cooldown');
+    }
+    try {
+        const data = await fetchJsonWithTimeout(RAG_ASK_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question, top_k: topK })
+        });
+        ragUnavailableUntil = 0;
+        return data;
+    } catch (error) {
+        ragUnavailableUntil = Date.now() + RAG_RETRY_COOLDOWN_MS;
+        throw error;
+    }
+}
 
 function getStageGuideCacheKey(stage, fungusType, hostType, environment) {
     return [stage, fungusType, hostType, environment].join('|');
@@ -1985,7 +2382,8 @@ function buildStageGuideQuestion(stage, info) {
         `宿主：${hostName}`,
         `环境：${envName}`,
         `阶段名称：${info.name}`,
-        `阶段时间：${info.time}（${info.realTime}）`,
+        `现实周期（示意）：${info.time}`,
+        `模拟展示时间：${info.realTime}`,
         `当前基础说明：${info.description}`,
         skippedText,
         '请只基于知识库证据回答，输出中文短段落。'
@@ -1998,18 +2396,9 @@ async function fetchStageRagExplanation(stage, info) {
         return stageGuideRagCache.get(cacheKey);
     }
 
-    const response = await fetch(RAG_ASK_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            question: buildStageGuideQuestion(stage, info),
-            top_k: 2
-        })
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.message || data.error || `HTTP ${response.status}`);
+    const data = await requestRagAnswer(buildStageGuideQuestion(stage, info), 2);
+    if (!isRagDataRelevant(data, gameState.fungusType)) {
+        throw new Error('rag_irrelevant');
     }
 
     const payload = {
@@ -2035,7 +2424,8 @@ function buildStageGuideText(statusMessage = '') {
     }
     lines.push('');
 
-    for (let i = 1; i <= 8; i++) {
+    const totalStages = getInfectionStageCount();
+    for (let i = 1; i <= totalStages; i++) {
         const info = getStageInfo(i, gameState.fungusType, gameState.hostType);
         const marker = i === current ? '👉 ' : '';
         const skipped = info.skipped ? '（跳过）' : '';
@@ -2043,7 +2433,8 @@ function buildStageGuideText(statusMessage = '') {
         const ragData = stageGuideRagCache.get(cacheKey);
 
         lines.push(`${marker}阶段${i}｜${info.name}${skipped}`);
-        lines.push(`时间：${info.time}（${info.realTime}）`);
+        lines.push(`现实周期（示意）：${info.time}`);
+        lines.push(`模拟展示时间：${info.realTime}`);
         lines.push(`基础说明：${info.description}`);
 
         if (ragData && ragData.answer) {
@@ -2069,14 +2460,15 @@ async function hydrateStageGuideWithRAG() {
     renderStageGuidePanel('正在补充阶段知识...');
 
     let completed = 0;
-    for (let i = 1; i <= 8; i++) {
+    const totalStages = getInfectionStageCount();
+    for (let i = 1; i <= totalStages; i++) {
         const info = getStageInfo(i, gameState.fungusType, gameState.hostType);
         try {
             await fetchStageRagExplanation(i, info);
         } catch (error) {
             const cacheKey = getStageGuideCacheKey(i, gameState.fungusType, gameState.hostType, gameState.environment);
             stageGuideRagCache.set(cacheKey, {
-                answer: `知识库补充暂时不可用：${error.message || error}`,
+                answer: '本地阶段说明已保留；在线知识补充未及时返回。',
                 retrieved: []
             });
         }
@@ -2087,11 +2479,11 @@ async function hydrateStageGuideWithRAG() {
         const panel = document.getElementById('stage-guide-panel');
         if (!panel || panel.classList.contains('hidden')) return;
 
-        renderStageGuidePanel(`已完成 ${completed}/8 个阶段`);
+        renderStageGuidePanel(`已完成 ${completed}/${totalStages} 个阶段`);
     }
 
     if (myToken === stageGuideHydrationToken) {
-        renderStageGuidePanel('8/8 阶段知识已完成补充');
+        renderStageGuidePanel(`${totalStages}/${totalStages} 阶段知识已完成补充`);
     }
 }
 
@@ -2105,7 +2497,8 @@ async function enrichCurrentStageWithRAG(stage) {
         if (!gameState.isInfectionMode || Number(gameState.currentInfectionStage) !== currentStage) return;
 
         let warningText = `⚠️ 阶段${currentStage}: ${info.name}\n`;
-        warningText += `时间: ${info.time} (${info.realTime})\n`;
+        warningText += `现实周期（示意）：${info.time}\n`;
+        warningText += `模拟展示时间：${info.realTime}\n`;
         warningText += `${info.description}`;
         if (ragData && ragData.answer) {
             warningText += `\n\n【知识库补充】\n${ragData.answer}`;
@@ -2198,8 +2591,8 @@ async function callLLM(prompt, { temperature = 0.4 } = {}) {
 // Auto Demo (AI vs AI)
 // =========================
 const AUTO_DEMO_STEP_DELAY_MS = 900;
-const AUTO_DEMO_INFECTION_SPEED_MS = 6000;
-const AUTO_DEMO_INFECTION_MAX_MS = 50000;
+const AUTO_DEMO_INFECTION_SPEED_MS = 20000;
+const AUTO_DEMO_INFECTION_MAX_MS = 200000;
 const AUTO_DEMO_INFECTED_HOST_DELAY_MS = 2400;
 const AUTO_DEMO_INFECTED_HOST_MAX_ACTIONS = 10;
 
@@ -2326,33 +2719,33 @@ function prepareAutoDemoGame() {
     clearTimeout(gameState.simulationTimer);
     gameState.simulationTimer = null;
     gameState.timer = null;
+    stopFoodRefreshLoop();
+    clearFoodItems();
 
     if (resultScreen) resultScreen.classList.add('hidden');
     hideScienceFact();
 
+    const selectedFungus = document.getElementById('fungus-type')?.value || 'unilateralis';
+    const selectedHost = document.getElementById('host-type')?.value || getPairing(selectedFungus).hostType;
+    const selectedEnvironment = document.getElementById('environment-type')?.value ||
+        getPairing(selectedFungus).preferredEnvironments[0];
     Object.assign(gameState, {
         currentPhase: 'setup',
         playerSide: 'fungus',
-        hostType: 'camponotus',
-        environment: 'rainforest',
-        fungusType: 'unilateralis',
+        hostType: selectedHost,
+        environment: selectedEnvironment,
+        fungusType: selectedFungus,
         spores: [],
         stepsTaken: 0,
         isInfectionMode: false,
         isPaused: false,
         simulationSpeed: 30000,
-        infectionDaysSurvived: 0,
-        infectionHealthDays: 0,
-        infectionPenaltyCyclesApplied: 0,
-        infectionLastTickTs: 0,
         isHostControllable: true,
         sporesVisible: true,
         currentInfectionStage: 0,
-        energy: 0,
-        foodItems: [],
-        gameDay: 0,
         infectionStep: 0
     });
+    resetV1HostAbilities();
     autoDemo.hostHistory = [];
     autoDemo.lastHostAction = null;
     autoDemo.noProgressCount = 0;
@@ -2367,13 +2760,12 @@ function prepareAutoDemoGame() {
     const fungusSelect = document.getElementById('fungus-type');
     if (playerSideSelect) playerSideSelect.value = 'fungus';
     if (hostTypeSelect) {
-        hostTypeSelect.value = 'camponotus';
-        onHostChange('camponotus');
+        hostTypeSelect.value = gameState.hostType;
     }
     const envSelect = document.getElementById('environment-type');
-    if (envSelect) envSelect.value = 'rainforest';
+    if (envSelect) envSelect.value = gameState.environment;
     if (fungusSelect) {
-        fungusSelect.value = 'unilateralis';
+        fungusSelect.value = gameState.fungusType;
         fungusSelect.disabled = false;
     }
 
@@ -2381,7 +2773,6 @@ function prepareAutoDemoGame() {
     hideHostIndicator();
     if (nestIndicator) nestIndicator.classList.add('hidden');
 
-    document.querySelectorAll('.food-item').forEach((el) => el.remove());
     clearAutoDemoHighlights();
     if (aiCommentaryPanel) aiCommentaryPanel.classList.add('hidden');
     const stageGuidePanel = document.getElementById('stage-guide-panel');
@@ -2412,6 +2803,9 @@ function buildHostAISnapshot() {
         stepsTaken: gameState.stepsTaken,
         maxSteps: gameState.maxSteps,
         stepsRemaining: Math.max(0, gameState.maxSteps - gameState.stepsTaken),
+        abilities: gameState.hostType === 'camponotus'
+            ? { groomAvailable: !gameState.groomUsed, firstLayerChangeFree: gameState.firstLayerChangeFree }
+            : { burrowAvailable: gameState.burrowCooldownMoves === 0, burrowCooldownMoves: gameState.burrowCooldownMoves },
         distanceToNest,
         lastAction,
         noProgressCount: autoDemo.noProgressCount,
@@ -2432,18 +2826,19 @@ function getProjectedHostPosition(action) {
         return projected;
     }
 
+    const stepSizeForAction = action.action === 'burrow' ? 10 : stepSize;
     switch (action.direction) {
         case 'up':
-            projected.y = Math.max(0, projected.y - stepSize);
+            projected.y = Math.max(0, projected.y - stepSizeForAction);
             break;
         case 'down':
-            projected.y = Math.min(100, projected.y + stepSize);
+            projected.y = Math.min(100, projected.y + stepSizeForAction);
             break;
         case 'left':
-            projected.x = Math.max(0, projected.x - stepSize);
+            projected.x = Math.max(0, projected.x - stepSizeForAction);
             break;
         case 'right':
-            projected.x = Math.min(100, projected.x + stepSize);
+            projected.x = Math.min(100, projected.x + stepSizeForAction);
             break;
     }
     return projected;
@@ -2451,6 +2846,12 @@ function getProjectedHostPosition(action) {
 
 function getActionDistanceAfterMove(action) {
     return calculateDistance(getProjectedHostPosition(action), gameState.nestPosition);
+}
+
+function doesHostActionApproachNest(action) {
+    if (!action || !['move', 'burrow'].includes(action.action)) return false;
+    const beforeDistance = calculateDistance(gameState.hostPosition, gameState.nestPosition);
+    return getActionDistanceAfterMove(action) < beforeDistance - 0.1;
 }
 
 function areOppositeDirections(a, b) {
@@ -2469,10 +2870,14 @@ function getCandidateHostActions() {
         { action: 'move', direction: 'left' },
         { action: 'move', direction: 'right' }
     ];
-    if (gameState.hostPosition.layer < 2 && gameState.stepsTaken + 3 <= gameState.maxSteps) {
+    if (gameState.hostType === 'ghost_moth' && gameState.burrowCooldownMoves === 0) {
+        ['up', 'down', 'left', 'right'].forEach((direction) => actions.push({ action: 'burrow', direction }));
+    }
+    const layerCost = gameState.firstLayerChangeFree ? 0 : 1;
+    if (gameState.hostType === 'camponotus' && gameState.hostPosition.layer < 2 && gameState.stepsTaken + layerCost <= gameState.maxSteps) {
         actions.push({ action: 'layer', delta: 1 });
     }
-    if (gameState.hostPosition.layer > 0 && gameState.stepsTaken + 3 <= gameState.maxSteps) {
+    if (gameState.hostType === 'camponotus' && gameState.hostPosition.layer > 0 && gameState.stepsTaken + layerCost <= gameState.maxSteps) {
         actions.push({ action: 'layer', delta: -1 });
     }
     return actions;
@@ -2484,14 +2889,16 @@ function isHostActionValid(action) {
     const after = getProjectedHostPosition(action);
 
     if (action.action === 'layer') {
+        if (gameState.hostType !== 'camponotus') return false;
         const nextLayer = before.layer + action.delta;
         if (nextLayer < 0 || nextLayer > 2) return false;
-        if (gameState.stepsTaken + 3 > gameState.maxSteps) return false;
+        if (gameState.stepsTaken + (gameState.firstLayerChangeFree ? 0 : 1) > gameState.maxSteps) return false;
         const recentLayerChanges = autoDemo.hostHistory.slice(-2).filter((item) => item.action?.action === 'layer').length;
         return recentLayerChanges < 2;
     }
 
-    if (action.action === 'move') {
+    if (action.action === 'move' || action.action === 'burrow') {
+        if (action.action === 'burrow' && (gameState.hostType !== 'ghost_moth' || gameState.burrowCooldownMoves > 0)) return false;
         if (before.x === after.x && before.y === after.y) return false;
         const previous = autoDemo.lastHostAction;
         if (previous?.action === 'move' && areOppositeDirections(previous.direction, action.direction) && autoDemo.noProgressCount > 0) {
@@ -2514,19 +2921,14 @@ function getSmartFallbackHostMove() {
         .sort((a, b) => {
             const aLayerPenalty = a.action.action === 'layer' ? 8 : 0;
             const bLayerPenalty = b.action.action === 'layer' ? 8 : 0;
-            const aRepeatPenalty = JSON.stringify(a.action) === JSON.stringify(autoDemo.lastHostAction) ? 4 : 0;
-            const bRepeatPenalty = JSON.stringify(b.action) === JSON.stringify(autoDemo.lastHostAction) ? 4 : 0;
-            return (a.distance + aLayerPenalty + aRepeatPenalty) - (b.distance + bLayerPenalty + bRepeatPenalty);
+            return (a.distance + aLayerPenalty) - (b.distance + bLayerPenalty);
         });
 
     if (candidates.length > 0) {
-        if (autoDemo.noProgressCount >= 2 && candidates[1]) {
-            return candidates[1].action;
-        }
         return candidates[0].action;
     }
 
-    if (gameState.hostPosition.layer !== nest.layer && gameState.stepsTaken + 3 <= gameState.maxSteps) {
+    if (gameState.hostType === 'camponotus' && gameState.hostPosition.layer !== nest.layer && gameState.stepsTaken + 1 <= gameState.maxSteps) {
         return { action: 'layer', delta: nest.layer > gameState.hostPosition.layer ? 1 : -1 };
     }
 
@@ -2539,12 +2941,13 @@ function getGreedyHostMove() {
 
 function repairHostAction(action) {
     const normalized = normalizeHostAIAction(action);
-    if (isHostActionValid(normalized)) return normalized;
+    if (isHostActionValid(normalized) && doesHostActionApproachNest(normalized)) return normalized;
     return getSmartFallbackHostMove();
 }
 
-function getHostActionStepCost(action) {
-    return action?.action === 'layer' ? 3 : 1;
+function getHostActionStepCost(action, state = gameState) {
+    if (action?.action === 'layer') return state.firstLayerChangeFree ? 0 : 1;
+    return 1;
 }
 
 function getProjectedPositionForState(position, action) {
@@ -2557,21 +2960,32 @@ function getProjectedPositionForState(position, action) {
         return projected;
     }
 
+    const stepSizeForAction = action.action === 'burrow' ? 10 : stepSize;
     switch (action.direction) {
         case 'up':
-            projected.y = Math.max(0, projected.y - stepSize);
+            projected.y = Math.max(0, projected.y - stepSizeForAction);
             break;
         case 'down':
-            projected.y = Math.min(100, projected.y + stepSize);
+            projected.y = Math.min(100, projected.y + stepSizeForAction);
             break;
         case 'left':
-            projected.x = Math.max(0, projected.x - stepSize);
+            projected.x = Math.max(0, projected.x - stepSizeForAction);
             break;
         case 'right':
-            projected.x = Math.min(100, projected.x + stepSize);
+            projected.x = Math.min(100, projected.x + stepSizeForAction);
             break;
     }
     return projected;
+}
+
+function doesHostActionApproachNestForState(action, state) {
+    if (!action || !['move', 'burrow'].includes(action.action)) return false;
+    const beforeDistance = calculateDistance(state.hostPosition, state.nestPosition);
+    const afterDistance = calculateDistance(
+        getProjectedPositionForState(state.hostPosition, action),
+        state.nestPosition
+    );
+    return afterDistance < beforeDistance - 0.1;
 }
 
 function getPlanInitialState() {
@@ -2580,6 +2994,8 @@ function getPlanInitialState() {
         nestPosition: { ...gameState.nestPosition },
         stepsTaken: gameState.stepsTaken,
         maxSteps: gameState.maxSteps,
+        firstLayerChangeFree: gameState.firstLayerChangeFree,
+        burrowCooldownMoves: gameState.burrowCooldownMoves,
         history: autoDemo.hostHistory.slice(),
         lastAction: autoDemo.lastHostAction,
         noProgressCount: autoDemo.noProgressCount
@@ -2593,10 +3009,14 @@ function getCandidateHostActionsForState(state) {
         { action: 'move', direction: 'left' },
         { action: 'move', direction: 'right' }
     ];
-    if (state.hostPosition.layer < 2 && state.stepsTaken + 3 <= state.maxSteps) {
+    if (gameState.hostType === 'ghost_moth' && state.burrowCooldownMoves === 0) {
+        ['up', 'down', 'left', 'right'].forEach((direction) => actions.push({ action: 'burrow', direction }));
+    }
+    const layerCost = state.firstLayerChangeFree ? 0 : 1;
+    if (gameState.hostType === 'camponotus' && state.hostPosition.layer < 2 && state.stepsTaken + layerCost <= state.maxSteps) {
         actions.push({ action: 'layer', delta: 1 });
     }
-    if (state.hostPosition.layer > 0 && state.stepsTaken + 3 <= state.maxSteps) {
+    if (gameState.hostType === 'camponotus' && state.hostPosition.layer > 0 && state.stepsTaken + layerCost <= state.maxSteps) {
         actions.push({ action: 'layer', delta: -1 });
     }
     return actions;
@@ -2607,14 +3027,16 @@ function isHostActionValidForState(action, state) {
     const after = getProjectedPositionForState(state.hostPosition, action);
 
     if (action.action === 'layer') {
+        if (gameState.hostType !== 'camponotus') return false;
         const nextLayer = state.hostPosition.layer + action.delta;
         if (nextLayer < 0 || nextLayer > 2) return false;
-        if (state.stepsTaken + 3 > state.maxSteps) return false;
+        if (state.stepsTaken + (state.firstLayerChangeFree ? 0 : 1) > state.maxSteps) return false;
         const recentLayerChanges = state.history.slice(-2).filter((item) => item.action?.action === 'layer').length;
         return recentLayerChanges < 2;
     }
 
-    if (action.action === 'move') {
+    if (action.action === 'move' || action.action === 'burrow') {
+        if (action.action === 'burrow' && state.burrowCooldownMoves > 0) return false;
         if (state.hostPosition.x === after.x && state.hostPosition.y === after.y) return false;
         if (
             state.lastAction?.action === 'move' &&
@@ -2639,13 +3061,11 @@ function getFallbackHostMoveForState(state) {
         .sort((a, b) => {
             const aLayerPenalty = a.action.action === 'layer' ? 8 : 0;
             const bLayerPenalty = b.action.action === 'layer' ? 8 : 0;
-            const aRepeatPenalty = JSON.stringify(a.action) === JSON.stringify(state.lastAction) ? 4 : 0;
-            const bRepeatPenalty = JSON.stringify(b.action) === JSON.stringify(state.lastAction) ? 4 : 0;
-            return (a.distance + aLayerPenalty + aRepeatPenalty) - (b.distance + bLayerPenalty + bRepeatPenalty);
+            return (a.distance + aLayerPenalty) - (b.distance + bLayerPenalty);
         });
 
     if (candidates.length > 0) {
-        return state.noProgressCount >= 2 && candidates[1] ? candidates[1].action : candidates[0].action;
+        return candidates[0].action;
     }
 
     return null;
@@ -2658,7 +3078,10 @@ function applyHostActionToPlanState(state, action) {
     const improved = afterDistance < beforeDistance - 0.1;
 
     state.hostPosition = afterPosition;
-    state.stepsTaken += getHostActionStepCost(action);
+    state.stepsTaken += getHostActionStepCost(action, state);
+    if (action.action === 'layer') state.firstLayerChangeFree = false;
+    if (action.action === 'burrow') state.burrowCooldownMoves = 3;
+    if (action.action === 'move' && state.burrowCooldownMoves > 0) state.burrowCooldownMoves -= 1;
     state.lastAction = action;
     state.noProgressCount = improved ? 0 : state.noProgressCount + 1;
     state.history.push({
@@ -2689,12 +3112,12 @@ function repairHostPlan(actions, horizon) {
 
     while (state.stepsTaken < maxStepBudget && repaired.length < maxActions) {
         const candidate = actions[inputIndex++] || null;
-        let action = isHostActionValidForState(candidate, state)
+        let action = isHostActionValidForState(candidate, state) && doesHostActionApproachNestForState(candidate, state)
             ? candidate
             : getFallbackHostMoveForState(state);
 
         if (!action || !isHostActionValidForState(action, state)) break;
-        if (state.stepsTaken + getHostActionStepCost(action) > maxStepBudget) {
+        if (state.stepsTaken + getHostActionStepCost(action, state) > maxStepBudget) {
             action = getFallbackHostMoveForState({
                 ...state,
                 maxSteps: maxStepBudget
@@ -2706,7 +3129,7 @@ function repairHostPlan(actions, horizon) {
         applyHostActionToPlanState(state, action);
 
         const reachedNest = calculateDistance(state.hostPosition, state.nestPosition) < 8;
-        if (reachedNest && state.stepsTaken >= 10) break;
+        if (reachedNest) break;
     }
 
     return repaired;
@@ -2720,10 +3143,17 @@ async function planHostMovesAI() {
 
 【目标】
 从当前局面开始，提前思考最多 ${horizon} 步，在 ${snapshot.maxSteps} 步限制内尽量抵达巢穴。
+首要且不可违背的目标是让每次平面移动后的欧式距离都严格小于移动前；不要探索地图边缘。
+
+【坐标方向】
+- right：x 增加；left：x 减少；down：y 增加；up：y 减少。
+- 比较 hostPosition 与 nestPosition：巢穴 x 更大时只能用 right 接近，x 更小时只能用 left 接近；y 同理。
+- 每一步都先计算动作后的坐标与 distanceToNest，禁止输出会让距离不变或增大的 move/burrow。
 
 【重要限制】
 - 不能使用、猜测或要求孢子坐标。
-- 平面移动每次消耗 1 步；换层消耗 3 步。
+- 平面移动与普通换层每次消耗 1 步；木蚁首次换层免费。
+- 鬼天蛾幼虫只能在地面层，可在 Burrow 可用时用 burrow 连续移动两格，消耗 1 步。
 - 如果换层，delta 只能是 1 或 -1。
 - 不要原地撞墙，不要来回抵消移动。
 
@@ -2731,7 +3161,8 @@ async function planHostMovesAI() {
 只输出严格 JSON，不要 Markdown、不要解释。格式：
 {"actions":[
   {"action":"move","direction":"up|down|left|right"},
-  {"action":"layer","delta":1|-1}
+  {"action":"layer","delta":1|-1},
+  {"action":"burrow","direction":"up|down|left|right"}
 ]}
 
 【当前局面 JSON】
@@ -2775,6 +3206,7 @@ async function playHostPlan(actions, token) {
 
 function formatHostAction(action) {
     if (action.action === 'layer') return action.delta > 0 ? '上层' : '下层';
+    if (action.action === 'burrow') return `Burrow ${action.direction}`;
     const names = { up: '向上', down: '向下', left: '向左', right: '向右' };
     return names[action.direction] || action.direction;
 }
@@ -2811,13 +3243,7 @@ function buildAICommentarySnapshot() {
         x: round1(s.x),
         y: round1(s.y)
     }));
-    const foods = (gameState.foodItems || []).map((f) => ({
-        layer: f.layer,
-        x: round1(f.x),
-        y: round1(f.y)
-    }));
     const sporeCounts = getLayerCounts(spores);
-    const foodCounts = getLayerCounts(foods);
 
     return {
         phase: 'infection',
@@ -2825,70 +3251,50 @@ function buildAICommentarySnapshot() {
         environment: getEnvironmentName(gameState.environment),
         fungusType: getFungusTypeName(gameState.fungusType),
         infectionStage: gameState.currentInfectionStage,
-        daysSurvived: round1(gameState.infectionDaysSurvived),
-        goalDays: gameState.infectionGoalDays,
-        healthDays: round1(gameState.infectionHealthDays),
-        energy: gameState.energy,
+        totalStages: getInfectionStageCount(),
+        outcome: 'fungus_victory',
         stepsTaken: gameState.stepsTaken,
         maxSteps: gameState.maxSteps,
         hostPosition: hostPos,
         spores,
-        foodItems: foods,
         summary: {
             sporeCountsByLayer: sporeCounts,
-            foodCountsByLayer: foodCounts,
-            nearestSporeSameLayer: getNearestOnSameLayer(hostPos, spores),
-            nearestFoodSameLayer: getNearestOnSameLayer(hostPos, foods)
+            nearestSporeSameLayer: getNearestOnSameLayer(hostPos, spores)
         }
     };
 }
 
 function buildAICommentaryMeta(snapshot) {
     const sporeCounts = snapshot.summary?.sporeCountsByLayer || { 0: 0, 1: 0, 2: 0 };
-    const foodCounts = snapshot.summary?.foodCountsByLayer || { 0: 0, 1: 0, 2: 0 };
+    const match = getPairMatch();
     return (
-        `阶段：${gameState.currentInfectionStage}/8\n` +
+        `阶段：${gameState.currentInfectionStage}/${getInfectionStageCount()}\n` +
         `宿主：${getHostTypeName(gameState.hostType)} | 真菌：${getFungusTypeName(gameState.fungusType)} | 环境：${getEnvironmentName(gameState.environment)}\n` +
-        `已生存：${round1(gameState.infectionDaysSurvived)}/${gameState.infectionGoalDays} 天 | 剩余生命：${round1(gameState.infectionHealthDays)} 天 | 能量：${gameState.energy}\n` +
-        `孢子分布(0/1/2层)：${sporeCounts[0]}/${sporeCounts[1]}/${sporeCounts[2]} | 食物分布(0/1/2层)：${foodCounts[0]}/${foodCounts[1]}/${foodCounts[2]}`
+        `匹配关系：${match.compatible ? '科学匹配' : '实验性不匹配组合'} | 结局：感染成功\n` +
+        `孢子分布(0/1/2层)：${sporeCounts[0]}/${sporeCounts[1]}/${sporeCounts[2]}`
     );
 }
 
 function buildLocalAICommentary(snapshot) {
-    const remainingGoalDays = Math.max(0, (snapshot.goalDays || 15) - (snapshot.daysSurvived || 0));
-    const healthDays = Number(snapshot.healthDays || 0);
-    const nearestFood = snapshot.summary?.nearestFoodSameLayer?.distance;
-    const nearestSpore = snapshot.summary?.nearestSporeSameLayer?.distance;
-    const predictedWinner = healthDays >= remainingGoalDays ? '宿主方' : '真菌方';
-    const confidence = healthDays >= remainingGoalDays ? '0.62' : '0.68';
-
+    const match = getPairMatch();
     return [
         '【当前局面】',
-        buildFunnyTwoLiner(snapshot),
+        match.compatible
+            ? `${getFungusTypeName(gameState.fungusType)} 已感染其科学匹配宿主。`
+            : `${getFungusTypeName(gameState.fungusType)} 在实验性组合中触发游戏感染；这不代表可靠的自然感染记录。`,
         '',
         '【概述】',
-        `GLM-5 暂时不可用，已切换为本地规则解说。当前宿主处于感染阶段${snapshot.infectionStage}/8。`,
+        `GLM-5 暂时不可用，已切换为本地科学解说。当前为阶段 ${snapshot.infectionStage}/${snapshot.totalStages}。`,
         '',
         '【分析要点】',
-        `- 宿主已生存 ${snapshot.daysSurvived}/${snapshot.goalDays} 天，剩余生命约 ${snapshot.healthDays} 天。`,
-        `- 距离胜利还需要坚持约 ${round1(remainingGoalDays)} 天，生命值与剩余目标天数是关键。`,
-        `- 同层最近食物距离：${nearestFood ?? '暂无'}；同层最近孢子距离：${nearestSpore ?? '暂无'}。`,
+        `- 当前阶段：${getStageInfo(snapshot.infectionStage, gameState.fungusType).name}。`,
+        `- 该动画用于解释感染过程，不再改变宿主回巢步数。`,
+        `- 当前配对为 ${getFungusTypeName(gameState.fungusType)} × ${getHostTypeName(gameState.hostType)}。`,
         '',
         '【胜负预测】',
-        `胜方：${predictedWinner}`,
-        `置信度：${confidence}`,
-        `时间尺度：约 ${round1(remainingGoalDays)} 天内见分晓`,
-        `原因：生命值 ${healthDays >= remainingGoalDays ? '足以覆盖' : '不足以覆盖'} 剩余生存目标；移动会继续消耗生命值。`,
-        '',
-        '【宿主建议】',
-        '- 优先寻找同层食物补充生命值。',
-        '- 减少无意义移动，避免触发额外生命惩罚。',
-        '- 如果需要换层，先确认收益大于步数成本。',
-        '',
-        '【真菌建议】',
-        '- 继续利用时间压力消耗宿主生命值。',
-        '- 观察宿主是否为了食物绕路。',
-        '- 如果宿主频繁移动，感染方优势会扩大。'
+        '胜方：真菌方',
+        '置信度：1.00',
+        '原因：宿主已经达到本局设定的有效接触阈值并触发感染。'
     ].join('\n');
 }
 
@@ -2956,17 +3362,15 @@ function buildInfectedHostAISnapshot() {
         environment: getEnvironmentName(gameState.environment),
         fungusType: getFungusTypeName(gameState.fungusType),
         infectionStage: gameState.currentInfectionStage,
-        daysSurvived: round1(gameState.infectionDaysSurvived),
-        goalDays: gameState.infectionGoalDays,
-        healthDays: round1(gameState.infectionHealthDays),
-        remainingGoalDays: round1(Math.max(0, gameState.infectionGoalDays - gameState.infectionDaysSurvived)),
+        totalStages: getInfectionStageCount(),
+        outcome: 'fungus_victory',
         hostPosition: hostPos,
         isHostControllable: gameState.isHostControllable,
         stepsTaken: gameState.stepsTaken,
         infectionStep: gameState.infectionStep,
         stepsSinceInfection,
         stepsUntilNextMovementPenalty: Math.max(0, nextPenaltyAt - stepsSinceInfection),
-        movementPenalty: '感染后每多移动约3步，生命值减少0.5天',
+        movementPenalty: 'V1 感染后不再移动',
         nearestFood: foods[0] || null,
         visibleFoodItems: foods.slice(0, 5),
         recentInfectedActions: autoDemo.infectedHostHistory.slice(-5),
@@ -3100,24 +3504,6 @@ function planInfectedRouteToNearestFood(maxActionsRemaining = AUTO_DEMO_INFECTED
 }
 
 function getInfectedHostFallbackAction() {
-    if (!gameState.isHostControllable) return { action: 'wait' };
-
-    const nearestFood = getNearestFoodForInfectedHost();
-    if (!nearestFood) return { action: 'wait' };
-
-    if (nearestFood.sameLayer && nearestFood.distance <= 8) {
-        return { action: 'wait' };
-    }
-
-    const remainingGoalDays = Math.max(0, gameState.infectionGoalDays - gameState.infectionDaysSurvived);
-    const healthBuffer = gameState.infectionHealthDays - remainingGoalDays;
-    if (healthBuffer < 1.5 || nearestFood.weightedDistance <= 28) {
-        if (nearestFood.layer !== gameState.hostPosition.layer) {
-            return { action: 'layer', delta: nearestFood.layer > gameState.hostPosition.layer ? 1 : -1 };
-        }
-        return getMoveTowardPoint(nearestFood);
-    }
-
     return { action: 'wait' };
 }
 
@@ -3130,23 +3516,18 @@ function repairInfectedHostAction(action) {
 async function decideInfectedHostActionAI() {
     const snapshot = buildInfectedHostAISnapshot();
     const prompt = `
-你是 Fungi Simulator 中“感染后的宿主 AI”。宿主已经感染，不再回巢穴，目标是在感染状态下尽量活满 ${snapshot.goalDays} 天。
+你是 Fungi Simulator 中的感染阶段观察器。V1 中宿主感染后不再行动，只能输出 wait。
 
 【可见信息】
-- 你可以看到自己的位置、感染阶段、剩余生命、附近食物。
+- 你可以看到感染阶段和当前配对是否为科学匹配；不匹配组合只能按游戏平衡抽象解释。
 - 你不知道未来随机事件，只能基于当前快照做求生决策。
 
 【策略】
 - 如果当前阶段不可控，输出 wait。
-- 如果同层附近有食物，优先靠近食物或等待拾取。
-- 如果食物在其他层，只有收益明显时才换层，因为换层会增加步数。
-- 如果生命值还够且附近没有食物，优先 wait 保留体力。
-- 感染后移动有惩罚：每约 3 步会额外减少 0.5 天生命值。
+- 始终输出 wait，感染阶段只用于生物学展示。
 
 【输出要求】
 只输出严格 JSON，不要解释，不要 Markdown。格式只能是：
-{"action":"move","direction":"up|down|left|right"}
-{"action":"layer","delta":1|-1}
 {"action":"wait"}
 
 【当前感染后局面 JSON】
@@ -3199,6 +3580,13 @@ function normalizeHostAIAction(raw) {
         }
     }
 
+    if (raw.action === 'burrow') {
+        const direction = String(raw.direction || '').toLowerCase();
+        if (['up', 'down', 'left', 'right'].includes(direction)) {
+            return { action: 'burrow', direction };
+        }
+    }
+
     return null;
 }
 
@@ -3209,9 +3597,13 @@ async function decideHostMoveAI() {
 
 【目标】
 在 ${snapshot.maxSteps} 步内尽量抵达巢穴，规避未知风险。
+首要且不可违背的目标是让本次平面移动后的欧式距离严格小于当前 distanceToNest；不要朝地图边缘探索。
 
 【行为策略】
-- 优先选择能让 distanceToNest 下降的动作。
+- 必须选择能让 distanceToNest 下降的动作；不能仅因为“规避未知风险”而远离巢穴。
+- 坐标规则：right 使 x 增加，left 使 x 减少，down 使 y 增加，up 使 y 减少。
+- 巢穴 x 大于宿主 x 时用 right，巢穴 x 小于宿主 x 时用 left；y 方向同理。
+- 输出前计算移动后的坐标和距离，禁止输出让距离不变或增大的 move/burrow。
 - 不要频繁换层；只有当前层难以前进，或巢穴在不同层且剩余步数足够时才换层。
 - 如果 recentHistory 显示连续动作没有改善距离，请换一个方向尝试。
 - 不要原地撞墙，也不要马上反向抵消上一回合移动。
@@ -3219,14 +3611,16 @@ async function decideHostMoveAI() {
 
 【移动规则】
 - 平面移动：up/down/left/right，每步约 5 个坐标单位
-- 换层：layer 动作 delta 只能是 1（上层）或 -1（下层），换层额外消耗 3 步
+- 木蚁换层：layer 动作 delta 只能是 1（上层）或 -1（下层），首次免费、之后消耗 1 步
+- 鬼天蛾幼虫只能在地面层；Burrow 可用时可输出 burrow，连续移动两格且消耗 1 步
 - 地图 layer：0=地面，1=植被，2=树冠
 
 【输出要求（必须严格遵守）】
 1) 只输出 JSON，不要 Markdown、不要解释
-2) 格式只能是以下两种之一：
+2) 格式只能是以下三种之一：
    {"action":"move","direction":"up|down|left|right"}
    {"action":"layer","delta":1|-1}
+   {"action":"burrow","direction":"up|down|left|right"}
 
 【当前局面 JSON】
 ${JSON.stringify(snapshot)}
@@ -3259,27 +3653,16 @@ function forceAutoDemoResult(reason = 'timeout') {
     gameState.simulationTimer = null;
 
     if (!gameState.isInfectionMode) {
-        setDemoStatus('宿主未能完成规避，自动进入感染结算…');
-        enterInfectionMode();
+        showResult('fungus_victory', '真菌胜利！宿主未能在 15 步内返回巢穴', {
+            steps: gameState.stepsTaken,
+            strategy: '路线封锁'
+        });
         return;
     }
-
-    const survived = Number(gameState.infectionDaysSurvived || 0);
-    const health = Number(gameState.infectionHealthDays || 0);
-    const goal = Number(gameState.infectionGoalDays || 15);
-    const remainingGoal = Math.max(0, goal - survived);
-
-    if (survived >= goal || health >= remainingGoal) {
-        showResult('host_victory', '🏆 生存胜利！宿主在 AI 自动演示中成功撑过感染周期', {
-            survivalDays: Math.max(goal, survived).toFixed ? Math.max(goal, survived).toFixed(1) : goal,
-            strategy: reason === 'timeout' ? '自动结算' : '抵抗'
-        });
-    } else {
-        showResult('fungus_victory', '🍄 感染胜利！AI 自动演示判定宿主无法撑过感染周期', {
-            survivalDays: survived.toFixed(1),
-            strategy: reason === 'timeout' ? '自动结算' : '感染'
-        });
-    }
+    showResult('fungus_victory', '感染成功！AI 自动演示完成感染阶段', {
+        stages: gameState.currentInfectionStage,
+        strategy: reason === 'timeout' ? '自动结算' : (getPairMatch().compatible ? '科学匹配感染' : '实验性组合')
+    });
 }
 
 async function finishAutoDemoIfUnresolved(token, reason = 'unresolved') {
@@ -3300,6 +3683,13 @@ function applyHostDemoAction(action) {
     const beforeDistance = calculateDistance(gameState.hostPosition, gameState.nestPosition);
     if (action.action === 'layer') {
         changeLayer(action.delta);
+        const afterDistance = calculateDistance(gameState.hostPosition, gameState.nestPosition);
+        recordHostAction(action, beforeDistance, afterDistance);
+        return;
+    }
+    if (action.action === 'burrow') {
+        activateBurrow();
+        moveHost(action.direction);
         const afterDistance = calculateDistance(gameState.hostPosition, gameState.nestPosition);
         recordHostAction(action, beforeDistance, afterDistance);
         return;
@@ -3341,10 +3731,6 @@ function recordInfectedHostAction(action, beforeSnapshot, collectedFood) {
     autoDemo.infectedHostHistory.push({
         action,
         stage: afterSnapshot.infectionStage,
-        beforeHealth: beforeSnapshot.healthDays,
-        afterHealth: afterSnapshot.healthDays,
-        beforeDays: beforeSnapshot.daysSurvived,
-        afterDays: afterSnapshot.daysSurvived,
         collectedFood,
         hostPosition: afterSnapshot.hostPosition
     });
@@ -3397,7 +3783,7 @@ async function playInfectedHostPlan(actions, token, actionsTaken) {
         collectedFood = collectedFood || result.collectedFood;
 
         if (result.collectedFood) {
-            setDemoStatus('感染后宿主 AI：成功找到食物，恢复 0.5 天生命值，准备重新规划下一段路线');
+            setDemoStatus('感染阶段仅用于展示，宿主不再执行求生行动');
         }
 
         await demoSleep(AUTO_DEMO_INFECTED_HOST_DELAY_MS);
@@ -3520,18 +3906,18 @@ async function runInfectionDemoPhase(token) {
         gameState.simulationTimer = null;
     }
 
-    setDemoStatus('已进入感染阶段：先生成 AI 局面解说…');
+    setDemoStatus(`${getPairMatch().compatible ? '科学匹配感染' : '实验性组合感染'}：生成 AI 生物学解说…`);
     showAutoDemoCommentaryPlaceholder();
     await demoSleep(600);
 
     if (autoDemo.active && token === autoDemo.token && gameState.isInfectionMode) {
         try {
             await generateAICommentary();
-            setDemoStatus('AI 局面解说已生成，开始感染后宿主求生反应…');
+            setDemoStatus('AI 解说已生成，继续播放感染阶段…');
         } catch (error) {
             if (!isDemoStoppedError(error)) {
                 console.warn('演示模式 AI 解说失败:', error);
-                showAutoDemoCommentaryPlaceholder(`AI 局面解说暂时不可用：${error.message || error}\n\n演示会继续进入感染后宿主求生阶段。`);
+                showAutoDemoCommentaryPlaceholder(`AI 局面解说暂时不可用：${error.message || error}\n\n演示会继续播放本地感染阶段。`);
             }
         }
     }
@@ -3542,13 +3928,6 @@ async function runInfectionDemoPhase(token) {
     gameState.simulationSpeed = getAutoDemoInfectionSpeedMs();
     gameState.isPaused = false;
     startInfectionLoop();
-
-    const infectedHostOutcome = await runInfectedHostAIDemoLoop(token);
-    if (!autoDemo.active || token !== autoDemo.token || isDemoGameEnded()) return;
-
-    if (infectedHostOutcome === 'actions_completed') {
-        setDemoStatus('感染后宿主 AI 已完成多轮求生反应，等待最终感染结算…');
-    }
 
     const outcome = await waitForDemoResult(token, AUTO_DEMO_INFECTION_MAX_MS);
     if (outcome === 'timeout') {
@@ -3769,11 +4148,7 @@ ${JSON.stringify(snapshot)}
 
 async function checkRagHealth() {
     try {
-        const res = await fetch(RAG_HEALTH_ENDPOINT);
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.message || data.error || `HTTP ${res.status}`);
-        }
+        const data = await fetchJsonWithTimeout(RAG_HEALTH_ENDPOINT);
         if (ragAnswerMeta) {
             ragAnswerMeta.innerHTML = buildRagMetaDetailsHtml('状态信息', [
                 ['状态', data.status || 'unknown'],
@@ -3788,8 +4163,10 @@ async function checkRagHealth() {
         }
         if (ragAnswerPanel) ragAnswerPanel.classList.remove('hidden');
     } catch (error) {
-        if (ragAnswerMeta) ragAnswerMeta.textContent = 'RAG health check failed';
-        if (ragAnswerContent) ragAnswerContent.textContent = String(error);
+        if (ragAnswerMeta) ragAnswerMeta.textContent = '当前使用本地知识';
+        if (ragAnswerContent) {
+            ragAnswerContent.innerHTML = '<p class="rag-empty-state">在线知识服务未及时返回；内置科学资料仍可正常使用，不影响游戏。</p>';
+        }
         if (ragAnswerPanel) ragAnswerPanel.classList.remove('hidden');
     }
 }
@@ -3843,6 +4220,25 @@ function useRagExampleQuestion(question, shouldSubmit = false) {
     }
 }
 
+function buildRagThinkingHtml() {
+    return [
+        '<section class="rag-answer-card rag-thinking-card" role="status" aria-live="polite">',
+        '<div class="rag-thinking-heading">',
+        '<span class="rag-thinking-spinner" aria-hidden="true"></span>',
+        '<div>',
+        '<strong>正在检索并生成回答</strong>',
+        '<p>回答完成前不会展示临时内容，请稍候。</p>',
+        '</div>',
+        '</div>',
+        '<div class="rag-thinking-steps" aria-hidden="true">',
+        '<span>检索相关证据</span>',
+        '<span>核对证据关联</span>',
+        '<span>组织最终回答</span>',
+        '</div>',
+        '</section>'
+    ].join('');
+}
+
 async function askRagQuestion() {
     const question = (ragQuestionInput?.value || '').trim();
     if (!question) {
@@ -3850,21 +4246,20 @@ async function askRagQuestion() {
         return;
     }
 
+    const localData = buildLocalScienceData(question);
     if (ragAskBtn) ragAskBtn.disabled = true;
-    if (ragAnswerMeta) ragAnswerMeta.textContent = 'RAG 检索与回答生成中...';
-    if (ragAnswerContent) ragAnswerContent.textContent = '';
-    if (ragAnswerPanel) ragAnswerPanel.classList.remove('hidden');
+    if (ragAnswerMeta) ragAnswerMeta.textContent = '正在思考，请稍候...';
+    if (ragAnswerContent) ragAnswerContent.innerHTML = buildRagThinkingHtml();
+    if (ragAnswerPanel) {
+        ragAnswerPanel.classList.remove('hidden');
+        ragAnswerPanel.setAttribute('aria-busy', 'true');
+    }
 
     try {
-        const res = await fetch(RAG_ASK_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question, top_k: 5 })
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.message || data.error || `HTTP ${res.status}`);
+        const data = await requestRagAnswer(question, 5);
+        const questionFactKey = getLocalScienceFactKey(question);
+        if (!isRagDataRelevant(data, questionFactKey)) {
+            throw new Error('rag_irrelevant');
         }
 
         if (ragAnswerMeta) {
@@ -3880,10 +4275,15 @@ async function askRagQuestion() {
             ragAnswerContent.innerHTML = buildRagAnswerHtml(data);
         }
     } catch (error) {
-        if (ragAnswerMeta) ragAnswerMeta.textContent = 'RAG 提问失败';
-        if (ragAnswerContent) ragAnswerContent.textContent = String(error);
+        if (ragAnswerMeta) {
+            ragAnswerMeta.textContent = error?.message === 'rag_irrelevant'
+                ? '在线证据与问题相关性不足，已切换至本地科学资料'
+                : '在线回答未及时返回，已切换至本地科学资料';
+        }
+        if (ragAnswerContent) ragAnswerContent.innerHTML = buildRagAnswerHtml(localData);
     } finally {
         if (ragAskBtn) ragAskBtn.disabled = false;
+        ragAnswerPanel?.setAttribute('aria-busy', 'false');
     }
 }
 
@@ -4049,6 +4449,13 @@ function renderRagRichText(value) {
             return;
         }
 
+        if (/^-{3,}$/.test(line)) {
+            flushParagraph();
+            flushList();
+            html.push('<hr class="rag-answer-divider" aria-hidden="true">');
+            return;
+        }
+
         const headingMatch = line.match(/^#{1,4}\s+(.+)$/);
         if (headingMatch) {
             flushParagraph();
@@ -4085,7 +4492,9 @@ function isRagLeadSentence(value) {
 }
 
 function formatRagInline(value) {
-    return escapeHtml(value)
+    const displayValue = String(value || '')
+        .replace(/(^|\s)(\*{2}|__)?(1[）.)]\s*)一句话结论(?=\s|\*|_|$)/u, '$1$2$3结论');
+    return escapeHtml(displayValue)
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/__([^_]+)__/g, '<strong>$1</strong>')
@@ -4095,6 +4504,7 @@ function formatRagInline(value) {
 // Restart game
 function restartGame() {
     stopAutoDemo();
+    resetInfectionArtifacts();
     resultScreen.classList.add('hidden');
     clearSpores();
     hideHostIndicator();
@@ -4106,31 +4516,37 @@ async function showScienceFacts() {
     const target = resultScienceFacts || document.getElementById('result-science-facts');
     if (!target) return;
 
+    const myToken = ++resultScienceRequestToken;
     target.classList.remove('hidden');
-    target.innerHTML = '<div class="result-science-title">知识库科学事实</div><div class="result-science-loading">正在从 RAG 知识库检索相关文章与来源...</div>';
 
     const question = [
         `请基于知识库给出与 ${getFungusTypeName(gameState.fungusType)}、${getHostTypeName(gameState.hostType)}、${getEnvironmentName(gameState.environment)} 相关的科学事实。`,
         '重点解释真菌感染宿主、行为操控、death grip、孢子传播或宿主抵抗，并返回可用于课堂展示的依据。'
     ].join(' ');
+    const localData = buildLocalScienceData(question);
+
+    // 先展示可用的本地科学内容；在线知识库仅作为增强，不能阻塞结算页。
+    target.innerHTML = buildResultScienceFactsHtml(localData, {
+        notice: '正在尝试补充在线知识库内容；本地科学资料已经可以阅读。'
+    });
 
     try {
-        const res = await fetch(RAG_ASK_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question, top_k: 4 })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.message || data.error || `HTTP ${res.status}`);
+        const data = await requestRagAnswer(question, 4);
+        if (myToken !== resultScienceRequestToken) return;
+        if (resultScreen?.classList.contains('hidden')) return;
+        if (!isRagDataRelevant(data, gameState.fungusType)) {
+            target.innerHTML = buildResultScienceFactsHtml(localData, {
+                notice: '在线知识库未找到与当前配对直接相关的资料，已保留内置科学内容。'
+            });
+            return;
         }
-
         target.innerHTML = buildResultScienceFactsHtml(data);
     } catch (error) {
-        target.innerHTML = [
-            '<div class="result-science-title">知识库科学事实</div>',
-            `<div class="result-science-error">RAG 知识库暂时不可用：${escapeHtml(String(error))}</div>`
-        ].join('');
+        if (myToken !== resultScienceRequestToken) return;
+        if (resultScreen?.classList.contains('hidden')) return;
+        target.innerHTML = buildResultScienceFactsHtml(localData, {
+            notice: '当前使用内置科学资料；在线补充未及时返回，不影响本局结果与继续游戏。'
+        });
     }
 }
 
@@ -4153,18 +4569,30 @@ function formatRagSource(metadata = {}) {
     return pieces.length ? pieces.join(' | ') : 'source: unknown';
 }
 
-function buildResultScienceFactsHtml(data) {
+function getScienceSourceLabel(source) {
+    const labels = {
+        local_verified: '内置科学资料',
+        local_fallback: '本地知识库',
+        chromadb: '在线知识库'
+    };
+    return labels[source] || '知识库';
+}
+
+function buildResultScienceFactsHtml(data, { notice = '' } = {}) {
     const retrieved = data.retrieved || [];
     const lines = [];
     lines.push('<div class="result-science-title">知识库科学事实</div>');
-    lines.push(`<div class="result-science-meta">source: ${escapeHtml(data.source || 'unknown')} | 检索条数: ${retrieved.length}</div>`);
+    lines.push(`<div class="result-science-meta">内容来源：${escapeHtml(getScienceSourceLabel(data.source))}｜资料 ${retrieved.length} 条</div>`);
+    if (notice) {
+        lines.push(`<div class="result-science-notice">${escapeHtml(notice)}</div>`);
+    }
     lines.push('<div class="result-science-answer">');
     lines.push('<strong>回答摘要</strong>');
-    lines.push(`<p>${escapeHtml(data.answer || '暂无回答')}</p>`);
+    lines.push(`<div class="result-science-answer-text">${renderRagRichText(data.answer || '暂无回答')}</div>`);
     lines.push('</div>');
 
     lines.push('<div class="result-science-evidence">');
-    lines.push('<strong>RAG 文章与 source</strong>');
+    lines.push('<strong>科学资料</strong>');
     if (!retrieved.length) {
         lines.push('<p>没有检索到相关文章。</p>');
     } else {
@@ -4181,16 +4609,62 @@ function buildResultScienceFactsHtml(data) {
     return lines.join('');
 }
 
+function resetInfectionArtifacts() {
+    clearInterval(gameState.simulationTimer);
+    clearTimeout(gameState.simulationTimer);
+    gameState.simulationTimer = null;
+    stopFoodRefreshLoop();
+    clearFoodItems();
+    stageGuideHydrationToken += 1;
+    resultScienceRequestToken += 1;
+
+    gameState.isInfectionMode = false;
+    gameState.isPaused = false;
+    gameState.isHostControllable = true;
+    gameState.currentInfectionStage = 0;
+    gameState.stageStartTime = 0;
+    gameState.stageElapsedMs = 0;
+    gameState.foodCollected = 0;
+
+    hideScienceFact();
+    infectionStageElement?.classList.add('hidden');
+    infectionTimeComparisonElement?.classList.add('hidden');
+    if (infectionNaturalTimeElement) infectionNaturalTimeElement.textContent = '自然感染周期：—';
+    if (infectionSimulationTimeElement) infectionSimulationTimeElement.textContent = '游戏模拟倒计时：—';
+    if (infectionTotalTimeElement) infectionTotalTimeElement.textContent = '完整动画时长：—';
+    if (stageNumberElement) stageNumberElement.textContent = '1';
+    if (stageTotalElement) stageTotalElement.textContent = String(getInfectionStageCount());
+    infectionControls?.classList.add('hidden');
+    movementControls?.classList.remove('disabled');
+    hostStepStatusElement?.classList.remove('hidden');
+
+    const stageGuidePanel = document.getElementById('stage-guide-panel');
+    const stageGuideContent = document.getElementById('stage-guide-content');
+    const stageGuideBtn = document.getElementById('stage-guide-btn');
+    stageGuidePanel?.classList.add('hidden');
+    if (stageGuideContent) stageGuideContent.textContent = '';
+    if (stageGuideBtn) stageGuideBtn.textContent = '📚 阶段详解';
+
+    aiCommentaryPanel?.classList.add('hidden');
+    if (aiCommentaryMeta) aiCommentaryMeta.textContent = '';
+    if (aiCommentaryContent) aiCommentaryContent.textContent = '';
+}
+
 // Return to setup
-function returnToSetup() {
+function returnToSetup(targetSectionId = 'setup-section') {
     stopAutoDemo();
+    clearInterval(gameState.timer);
+    gameState.timer = null;
+    resetInfectionArtifacts();
+    gameState.currentPhase = 'setup';
     resultScreen.classList.add('hidden');
     gameSection.classList.add('hidden');
     setupSection.classList.remove('hidden');
     if (notesSection) notesSection.classList.remove('hidden');
     clearSpores();
     hideHostIndicator();
-    navigateToSection('setup-section');
+    removeNestIndicatorFromMap();
+    navigateToSection(targetSectionId);
 }
 
 // Hide host indicator
@@ -4200,23 +4674,20 @@ function hideHostIndicator() {
 
 // Handle window resize for host indicator positioning
 window.addEventListener('resize', () => {
-    if (!hostIndicator.classList.contains('hidden')) {
+    if (hostIndicator && !hostIndicator.classList.contains('hidden')) {
         updateHostIndicator();
     }
-    if (!nestIndicator.classList.contains('hidden')) {
+    if (nestIndicator && !nestIndicator.classList.contains('hidden')) {
         updateNestIndicator();
     }
     // Update all food positions on resize
-    gameState.foodItems.forEach(food => {
+    (gameState.foodItems || []).forEach(food => {
         const foodElement = document.getElementById(food.id);
         if (foodElement) {
             const grid = document.querySelector(`#layer-${food.layer} .grid`);
             if (grid) {
-                const rect = grid.getBoundingClientRect();
-                const left = (rect.width * food.x / 100);
-                const top = (rect.height * food.y / 100);
-                foodElement.style.left = `${left}px`;
-                foodElement.style.top = `${top}px`;
+                foodElement.style.left = `${food.x}%`;
+                foodElement.style.top = `${food.y}%`;
             }
         }
     });
@@ -4224,28 +4695,19 @@ window.addEventListener('resize', () => {
 
 // Change host layer with controllability check
 function changeLayer(direction) {
-    // Check if host is controllable
-    if (!gameState.isHostControllable) {
-        if (scienceFact) {
-            scienceFact.textContent = '⚠️ 第4阶段：宿主暂时无法移动！';
-            scienceFact.classList.remove('hidden');
-            setTimeout(() => {
-                if (scienceFact) {
-                    scienceFact.classList.add('hidden');
-                }
-            }, 2000);
-        }
+    const isInfectionMove = canInfectedHostAct();
+    if (!canHostAct() && !isInfectionMove) return;
+    if (gameState.hostType === 'ghost_moth') {
+        showScienceFact('鬼天蛾幼虫只能在地面层移动。');
         return;
     }
-    
+    const maxLayer = gameState.hostType === 'camponotus' ? 2 : 1;
     const newLayer = gameState.hostPosition.layer + direction;
-    if (newLayer >= 0 && newLayer <= 2) {
-        // Moving between layers costs 3 steps
-        gameState.stepsTaken += 3;
-        if (stepCountElement) {
-            stepCountElement.textContent = gameState.stepsTaken;
-        }
-        
+    if (newLayer >= 0 && newLayer <= maxLayer) {
+        const cost = isInfectionMove ? 0 : (gameState.firstLayerChangeFree ? 0 : 1);
+        if (!isInfectionMove) gameState.firstLayerChangeFree = false;
+        gameState.groundDashArmed = false;
+        gameState.stepsTaken += cost;
         gameState.hostPosition.layer = newLayer;
         updateHostIndicator();
         
@@ -4255,70 +4717,26 @@ function changeLayer(direction) {
             currentLayerElement.textContent = layerNames[newLayer] || '地面层';
         }
         
-        // Check for spore encounter after layer change
-        if (!gameState.isInfectionMode && checkForSporeAtPosition(gameState.hostPosition)) {
-            enterInfectionMode();
-            return;
-        }
-        
-        // Check if steps exceeded - enter survival mode instead of defeat
-        if (!gameState.isInfectionMode && gameState.stepsTaken >= gameState.maxSteps) {
-            // Show warning for automatic survival mode
-            if (scienceFact) {
-                scienceFact.textContent = '⚠️ 规避失败！宿主未能在15步内抵达巢穴，自动进入感染生存模式。';
-                scienceFact.classList.remove('hidden');
-                
-                // Auto-hide the warning after 5 seconds
-                setTimeout(() => {
-                    if (scienceFact) {
-                        scienceFact.classList.add('hidden');
-                    }
-                }, 5000);
+        updateHostStatusUI();
+        if (isInfectionMove) {
+            if (checkForFoodAtPosition()) {
+                gameState.foodCollected += 1;
+                updateHostStatusUI();
             }
-            
-            // Automatically enter survival mode when step limit is reached
-            enterInfectionMode();
-            return;
+        } else {
+            settleHostAction();
         }
-        
-        // If already infected, check for additional step-based survival time reduction
-        if (gameState.isInfectionMode) {
-            checkInfectedStepPenalty();
-        }
+    } else if (newLayer > maxLayer) {
+        showScienceFact(gameState.hostType === 'ponerine' ? '猛蚁不能进入树冠层。' : '切叶蚁只能在地面层和植被层移动。');
     }
 }
 
-// Check for step-based survival time penalty when infected
 function checkInfectedStepPenalty() {
-    // Every 3 steps after infection reduces survival time by 0.5 days
-    const stepsSinceInfection = gameState.stepsTaken - gameState.infectionStep; // Need to track infection step
-    const penaltyCycles = Math.floor(stepsSinceInfection / 3);
-
-    // 只在 penaltyCycles 增加时扣除一次生命值，避免重复扣减
-    const deltaCycles = penaltyCycles - (gameState.infectionPenaltyCyclesApplied || 0);
-    if (deltaCycles <= 0) return;
-    gameState.infectionPenaltyCyclesApplied = penaltyCycles;
-
-    const penaltyDays = deltaCycles * 0.5;
-    gameState.infectionHealthDays = Math.max(0, gameState.infectionHealthDays - penaltyDays);
-
-    if (healthDaysElement) {
-        healthDaysElement.textContent = gameState.infectionHealthDays.toFixed(1);
-    }
-    updateRealTimeDisplay(Math.max(0, gameState.infectionGoalDays - gameState.infectionDaysSurvived));
-
-    // Check for defeat due to step penalties
-    if (gameState.infectionHealthDays <= 0) {
-        clearInterval(gameState.simulationTimer);
-        showResult('fungus_victory', '感染胜利！宿主因过度移动耗尽生命值', {
-            steps: gameState.stepsTaken,
-            strategy: '感染'
-        });
-    }
+    // V1 感染后只展示生物学阶段，不再应用移动伤害。
 }
 
 // Get detailed stage information based on fungus type
-function getStageInfo(stage, fungusType = 'unilateralis', hostType = 'camponotus') {
+function getLegacyStageInfo(stage, fungusType = 'unilateralis', hostType = 'camponotus') {
     // Check if this is the ghost moth + alpine meadow combo (special case)
     const isGhostMothSpecial = (hostType === 'ghost_moth' && gameState.environment === 'alpine_meadow');
     
@@ -4458,6 +4876,92 @@ function getStageInfo(stage, fungusType = 'unilateralis', hostType = 'camponotus
     return stageSet[stage] || { name: `阶段${stage}`, time: '未知', realTime: '未知', description: '未知阶段' };
 }
 
+const V1_INFECTION_STAGES = {
+    unilateralis: [
+        ['孢子附着', '孢子黏附木蚁外骨骼并开始萌发。'],
+        ['穿透外骨骼', '菌丝结合酶和机械压力突破体壁。'],
+        ['潜伏扩增', '真菌在宿主体内扩增并重塑代谢环境。'],
+        ['行为操控', '真菌代谢活动干扰宿主神经与肌肉协同。'],
+        ['异常移动与攀爬', '木蚁偏离正常路线并攀向有利于真菌繁殖的微环境。'],
+        ['叶片死亡紧咬', '木蚁以异常咬合固定在叶片或叶脉附近。'],
+        ['宿主死亡', '宿主死亡后菌丝继续利用组织并加固虫体。'],
+        ['子实体生长与孢子释放', '子实体成熟并释放孢子，完成传播循环。']
+    ],
+    kimflemingiae: [
+        ['孢子附着', '孢子黏附 Camponotus castaneus 外骨骼。'],
+        ['穿透外骨骼', '菌丝突破体壁并进入宿主体内。'],
+        ['潜伏扩增', '真菌在木蚁体内持续生长。'],
+        ['行为操控', '感染改变木蚁的活动与路线选择。'],
+        ['寻找树枝', '宿主移动到更符合该配对生态特征的树枝位置。'],
+        ['树枝紧咬', '宿主咬住树枝固定身体，而非使用叶片紧咬叙事。'],
+        ['宿主死亡', '宿主死亡后成为真菌继续发育的基质。'],
+        ['子实体生长与孢子释放', '子实体成熟并释放下一代孢子。']
+    ],
+    australis: [
+        ['孢子附着', '孢子接触猛蚁体表并开始萌发。'],
+        ['穿透外骨骼', '菌丝突破体壁并建立感染。'],
+        ['体内扩增', '真菌利用宿主营养持续生长。'],
+        ['活动路线改变', '感染影响宿主活动与位置选择。'],
+        ['抓附枝干', '宿主抓附在适合真菌继续发育的位置。'],
+        ['宿主死亡', '宿主死亡后成为真菌发育的基质。'],
+        ['子实体形成', '子实体从宿主体表长出并继续成熟。'],
+        ['孢子释放', '成熟子实体释放孢子，完成传播循环。']
+    ],
+    metarhizium: [
+        ['孢子黏附', '孢子黏附切叶蚁外骨骼。'],
+        ['表皮萌发', '孢子萌发并形成侵入结构。'],
+        ['穿透体壁', '菌丝结合酶和机械压力突破宿主体壁。'],
+        ['体内增殖', '真菌在宿主体内扩增并消耗营养。'],
+        ['普通真菌感染', '宿主活动下降；该过程不使用行为操控叙事。'],
+        ['宿主死亡', '严重感染最终导致宿主死亡。'],
+        ['体表产孢', '适宜条件下，真菌从宿主体表生长并产生孢子。']
+    ],
+    sinensis: [
+        ['孢子附着', '孢子在土壤环境中接触鬼天蛾幼虫。'],
+        ['进入幼虫体内', '真菌穿透体壁并建立感染。'],
+        ['潜伏生长', '菌丝在幼虫体内缓慢生长。'],
+        ['内部扩增', '真菌持续利用宿主营养并占据组织。'],
+        ['幼虫木乃伊化', '幼虫组织被菌丝替代并形成木乃伊化虫体。'],
+        ['子实体从土中生长', '子实体从埋藏的虫体向地表生长。'],
+        ['孢子释放', '成熟子实体释放孢子，完成生命周期。']
+    ]
+};
+
+function getInfectionStageCount(fungusType = gameState.fungusType) {
+    return (V1_INFECTION_STAGES[fungusType] || V1_INFECTION_STAGES.unilateralis).length;
+}
+
+const V1_STAGE_REAL_TIMES = {
+    unilateralis: ['接触后数小时内', '约 12–24 小时', '约第 1–3 天', '约第 4 天', '约第 4 天后段', '约第 4–5 天', '约第 5 天', '约第 7 天以后'],
+    kimflemingiae: ['接触后数小时内', '约 12–24 小时', '约第 1–3 天', '约第 4 天', '约第 4 天后段', '约第 4–5 天', '约第 5 天', '约第 7 天以后'],
+    australis: ['接触后数小时内', '约 12–24 小时', '约第 1–3 天', '约第 4 天', '约第 4–5 天', '约第 5 天', '数天以后', '子实体成熟后'],
+    metarhizium: ['接触后数小时内', '约 12–24 小时', '约第 1–2 天', '约第 2–4 天', '约第 4–7 天', '严重感染后', '宿主死亡且环境适宜时'],
+    sinensis: ['接触后的早期阶段', '数天至数周', '数周至数月', '数月尺度', '越冬前后', '次年生长季', '子实体成熟期']
+};
+
+function formatStageDuration(ms) {
+    const totalSeconds = Math.max(1, Math.round(ms / 1000));
+    if (totalSeconds >= 60) {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return seconds ? `约 ${minutes} 分 ${seconds} 秒` : `约 ${minutes} 分钟`;
+    }
+    return `约 ${totalSeconds} 秒`;
+}
+
+function getStageInfo(stage, fungusType = 'unilateralis') {
+    const stages = V1_INFECTION_STAGES[fungusType] || V1_INFECTION_STAGES.unilateralis;
+    const stageIndex = Math.max(0, Math.min(stages.length - 1, Number(stage) - 1));
+    const selected = stages[stageIndex];
+    const realTimes = V1_STAGE_REAL_TIMES[fungusType] || V1_STAGE_REAL_TIMES.unilateralis;
+    return {
+        name: selected[0],
+        time: realTimes[stageIndex] || '随宿主、环境与菌株而变化',
+        realTime: formatStageDuration(getActiveStageDurationMs(fungusType, stage)),
+        description: selected[1]
+    };
+}
+
 // Get infection stage description
 function getStageDescription(stage) {
     const stageInfo = getStageInfo(stage, gameState.fungusType, gameState.hostType);
@@ -4486,23 +4990,25 @@ function toggleStageGuide() {
 
 // Calculate stage duration based on fungus type
 function getStageDurations(fungusType = 'unilateralis', hostType = 'camponotus') {
-    const isGhostMothSpecial = (hostType === 'ghost_moth' && gameState.environment === 'alpine_meadow');
-    
-    if (isGhostMothSpecial || fungusType === 'sinensis') {
-        // O. sinensis timeline: total 6 minutes (360 seconds) for 8 stages
-        // But stages 4,5,6 are skipped, so we have 5 active stages
-        return {
-            totalDuration: 360000, // 6 minutes in milliseconds
-            stageDurations: [0, 15000, 75000, 90000, 0, 0, 0, 180000] // Custom durations for each stage
-        };
-    } else {
-        // O. unilateralis timeline: total 3 minutes 45 seconds (225 seconds) for 8 stages
-        const baseDuration = 225000 / 8; // ~28.125 seconds per stage
-        return {
-            totalDuration: 225000,
-            stageDurations: Array(8).fill(baseDuration)
-        };
-    }
+    const totalStages = getInfectionStageCount(fungusType);
+    const totalDurations = {
+        unilateralis: 225000,
+        kimflemingiae: 225000,
+        australis: 225000,
+        metarhizium: 210000,
+        sinensis: 360000
+    };
+    const totalDuration = totalDurations[fungusType] || 225000;
+    return {
+        totalDuration,
+        stageDurations: Array(totalStages).fill(totalDuration / totalStages)
+    };
+}
+
+function getStageDurationMs(fungusType = gameState.fungusType, stage = gameState.currentInfectionStage) {
+    const durations = getStageDurations(fungusType, gameState.hostType).stageDurations;
+    const index = Math.max(0, Math.min(durations.length - 1, Number(stage) - 1));
+    return durations[index] || 30000;
 }
 
 // Update infection stage display with detailed information
@@ -4510,23 +5016,24 @@ function updateInfectionStageDisplay() {
     if (infectionStageElement && stageNumberElement) {
         infectionStageElement.classList.remove('hidden');
         stageNumberElement.textContent = gameState.currentInfectionStage;
+        if (stageTotalElement) stageTotalElement.textContent = getInfectionStageCount();
+        updateInfectionTimeComparison(0);
         
         // Show detailed stage information as warning
         const stageInfo = getStageInfo(gameState.currentInfectionStage, gameState.fungusType, gameState.hostType);
         let warningText = `⚠️ 阶段${gameState.currentInfectionStage}: ${stageInfo.name}\n`;
-        warningText += `时间: ${stageInfo.time} (${stageInfo.realTime})\n`;
+        warningText += `现实周期（示意）：${stageInfo.time}\n`;
+        warningText += `模拟展示时间：${stageInfo.realTime}\n`;
         warningText += `${stageInfo.description}`;
         
         if (scienceFact) {
             scienceFact.innerHTML = warningText.replace(/\n/g, '<br>');
             scienceFact.classList.remove('hidden');
             
-            // Auto-hide after 9 seconds for detailed info
-            setTimeout(() => {
-                if (scienceFact) {
-                    scienceFact.classList.add('hidden');
-                }
-            }, 9000);
+            if (scienceFactHideTimer) {
+                clearTimeout(scienceFactHideTimer);
+                scienceFactHideTimer = null;
+            }
         }
 
         enrichCurrentStageWithRAG(gameState.currentInfectionStage);
@@ -4538,29 +5045,9 @@ function updateInfectionStageDisplay() {
             hydrateStageGuideWithRAG();
         }
         
-        // Handle stage-specific effects
-        if (gameState.currentInfectionStage === 4) {
-            const stage4Info = getStageInfo(4, gameState.fungusType, gameState.hostType);
-            if (stage4Info.skipped) {
-                // Stage 4 is skipped for O. sinensis, so don't disable controls
-                gameState.isHostControllable = true;
-                if (movementControls) {
-                    movementControls.classList.remove('disabled');
-                }
-            } else {
-                // Stage 4: Host cannot be controlled for O. unilateralis
-                gameState.isHostControllable = false;
-                if (movementControls) {
-                    movementControls.classList.add('disabled');
-                }
-            }
-        } else {
-            // Other stages: Host can be controlled (if not already disabled by other factors)
-            gameState.isHostControllable = true;
-            if (movementControls) {
-                movementControls.classList.remove('disabled');
-            }
-        }
+        gameState.isHostControllable = true;
+        if (movementControls) movementControls.classList.remove('disabled');
+        updateHostStatusUI();
     }
 }
 
@@ -4756,6 +5243,11 @@ function initializeRandomPositions() {
     let generated = false;
     for (let attempts = 0; attempts < 200; attempts++) {
         const hostPos = generateRandomPosition();
+        if (gameState.hostType === 'ghost_moth') {
+            hostPos.layer = 0;
+        } else if (gameState.hostType !== 'camponotus') {
+            hostPos.layer = Math.min(1, hostPos.layer);
+        }
         const nestPos = generateNestPositionInStepRange(hostPos, minStepsExclusive, maxStepsInclusive, stepSize);
         if (!nestPos) continue;
         gameState.hostPosition = hostPos;

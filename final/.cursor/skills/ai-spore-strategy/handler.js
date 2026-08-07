@@ -24,7 +24,7 @@ const feature = {
     pipeline: [
         { id: 'build-context', reads: ['fungusType', 'environment', 'nestPosition', 'mapBounds'], writes: ['fungusAIStrategyContext'], requires: ['buildFungusAIStrategyContext'], produces: ['fair fungus context without host spawn'] },
         { id: 'call-ai', reads: ['fungusAIStrategyContext', '/api/generate'], writes: ['rawDeploymentResponse'], requires: ['callGLMAPI'], produces: ['candidate deployment JSON'] },
-        { id: 'normalize', reads: ['rawDeploymentResponse'], writes: ['normalizedSpores'], requires: ['parseDeployments', 'normalizeSporeDeployments'], produces: ['10 valid spores'] },
+        { id: 'normalize', reads: ['rawDeploymentResponse', 'V1 pairing rules'], writes: ['normalizedSpores'], requires: ['parseDeployments', 'normalizeSporeDeployments'], produces: ['pairing-specific valid spores'] },
         { id: 'render', reads: ['normalizedSpores'], writes: ['spore DOM', 'spore count'], requires: ['renderSpore', 'updateSporeCount'], produces: ['visible deployment'] }
     ],
     minimalState: ['fungusType', 'environment', 'nestPosition', 'mapBounds', 'layerNames', 'sporeCount'],
@@ -35,16 +35,16 @@ const feature = {
         { id: 'spore-json-schema', category: 'io', checks: ['layer', 'x', 'y', 'strategy'] },
         { id: 'fungus-privacy', category: 'privacy', checks: ['no hostPosition in fungus context or prompt'] },
         { id: 'fallback-deployment', category: 'fallback', checks: ['buildFallbackSporeDeployment', 'randomSporeDeployment'] },
-        { id: 'spore-bounds', category: 'boundary', checks: ['layer 0..2', 'coordinates 0..100', 'exactly 10 spores'] }
+        { id: 'spore-bounds', category: 'boundary', checks: ['pairing allowed layers', 'coordinates 0..100', 'pairing target count'] }
     ],
     fallbacks: ['buildFallbackSporeDeployment', 'randomSporeDeployment', 'ensureValidSporeDeployment'],
     invariants: [
-        'AI deployment should normalize to exactly 10 spores.',
+        'AI deployment should normalize to the active pairing target count (10-13 spores).',
         'Spore x/y coordinates must remain in 0..100.',
         'Spore layer must remain in 0..2.',
         'Fungus AI must not receive host spawn coordinates.',
         'Failed AI generation should leave manual or fallback deployment usable.',
-        'Deployment confirmation should repair the board to 10 valid spores before host phase.'
+        'Deployment confirmation should repair the board to the pairing-specific count and layer rules before host phase.'
     ]
 };
 

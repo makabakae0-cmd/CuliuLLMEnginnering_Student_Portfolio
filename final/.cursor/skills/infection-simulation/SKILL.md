@@ -16,14 +16,13 @@ Use this skill when the user mentions:
 
 ## Core Concept
 
-The infection simulation turns a spore hit or failed escape into an eight-stage biology timeline with survival counters and stage explanations.
+The infection simulation turns a valid spore hit into a fungus-specific seven- or eight-stage biology timeline with stage explanations.
 
 Flow:
 
 1. `enterInfectionMode()` switches from host movement to infection controls.
-2. `startInfectionLoop()` and `runInfectionSimulation()` advance timers and survival state.
-3. `getStageInfo()` and `getStageDurations()` define stage names, skipped stages, and timing.
-4. `advanceInfectionStage()` updates the stage and final infection outcome.
+2. `startInfectionLoop()` advances the display-only biology timeline.
+3. `getStageInfo()` and `getInfectionStageCount()` define fungus-specific stage names and bounds.
 5. `toggleStageGuide()` and RAG helpers enrich the stage explanations.
 
 ## Key Files
@@ -39,8 +38,8 @@ Before changing this feature, read `handler.js` and validate its anchors after e
 
 Keep these invariants:
 
-- Stage numbers are `1..8`; skipped stages must not break the display.
-- `O. sinensis` and ghost moth special timing should keep their custom skipped-stage behavior.
+- Ant-fungus stage numbers are `1..8`; `O. sinensis` stage numbers are `1..7`.
+- Infection means fungus victory; Health, Damage, and post-infection return-home play must not return.
 - Pause, resume, and speed controls should not create duplicate timers.
 - Stage guide should work with local text even if RAG is unavailable.
 - Final victory/defeat should clear or stop active simulation timers.

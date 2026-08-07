@@ -4,12 +4,15 @@ const path = require('path');
 const feature = {
     name: 'host-ai-decision',
     keyFiles: ['index.html', 'static/script.js', 'backend/flask_glm5_server.py'],
-    domIds: ['host-controls', 'movement-controls', 'current-layer', 'step-count', 'energy-level'],
+    domIds: ['host-controls', 'movement-controls', 'current-layer', 'step-count', 'host-skill-status', 'burrow-btn'],
     functions: [
         'startHostPhase',
         'setupMovementControls',
         'moveHost',
         'changeLayer',
+        'activateBurrow',
+        'settleHostAction',
+        'resolveSporeExposure',
         'buildHostAISnapshot',
         'decideHostMoveAI',
         'normalizeHostAIAction',
@@ -22,7 +25,7 @@ const feature = {
     pipeline: [
         { id: 'snapshot', reads: ['hostPosition', 'nestPosition', 'stepsTaken', 'hostHistory'], writes: ['hostAISnapshot'], requires: ['buildHostAISnapshot'], produces: ['public host decision snapshot'] },
         { id: 'call-ai', reads: ['hostAISnapshot', '/api/generate'], writes: ['rawHostAction'], requires: ['decideHostMoveAI'], produces: ['candidate host action JSON'] },
-        { id: 'normalize', reads: ['rawHostAction'], writes: ['normalizedHostAction'], requires: ['normalizeHostAIAction', 'repairHostAction'], produces: ['valid move or layer action'] },
+        { id: 'normalize', reads: ['rawHostAction'], writes: ['normalizedHostAction'], requires: ['normalizeHostAIAction', 'repairHostAction'], produces: ['valid move, layer, or burrow action'] },
         { id: 'fallback', reads: ['invalid action', 'hostPosition'], writes: ['safeHostAction'], requires: ['getSmartFallbackHostMove', 'getGreedyHostMove'], produces: ['deterministic safe action'] }
     ],
     minimalState: ['hostPosition', 'nestPosition', 'stepsTaken', 'maxSteps', 'isHostControllable', 'hostHistory', 'lastHostAction'],
@@ -30,7 +33,7 @@ const feature = {
     outputs: ['move action', 'layer action', 'host position update', 'action history'],
     validations: [
         { id: 'symbols-exist', category: 'existence', checks: ['keyFiles', 'domIds', 'functions', 'backendRoutes'] },
-        { id: 'host-action-schema', category: 'io', checks: ['move.direction', 'layer.delta'] },
+        { id: 'host-action-schema', category: 'io', checks: ['move.direction', 'layer.delta', 'burrow.direction', 'triggered groom decision'] },
         { id: 'host-privacy', category: 'privacy', checks: ['no hidden spore data in snapshot'] },
         { id: 'host-fallback', category: 'fallback', checks: ['repairHostAction', 'getSmartFallbackHostMove'] },
         { id: 'movement-bounds', category: 'boundary', checks: ['map bounds', 'layer bounds', 'step limit'] }
@@ -38,9 +41,9 @@ const feature = {
     fallbacks: ['repairHostAction', 'getSmartFallbackHostMove', 'getGreedyHostMove'],
     invariants: [
         'Host AI must not receive hidden spore positions or trap hints.',
-        'Actions must normalize to move or layer JSON.',
+        'Actions must normalize to move, layer, or burrow JSON; Groom is only offered after exposure.',
         'Invalid model output must fall back to deterministic movement.',
-        'Movement must respect map boundaries, layer bounds, and step limits.'
+        'Movement must respect map boundaries, host layer rules, Burrow cooldown, and the 15-step limit.'
     ]
 };
 
