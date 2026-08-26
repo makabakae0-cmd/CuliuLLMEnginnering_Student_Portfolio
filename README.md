@@ -1,94 +1,158 @@
-# Student Portfolio Template 总览
+# Fungi Simulator — LLM Engineering Student Portfolio
 
-本目录是学生项目作品集的统一提交骨架，目标是帮助你在 15 次课内持续沉淀可展示成果，而不是最后临时拼接材料。
+> 欢迎光临！Welcome to my project portfolio o(^▽^)o
+
+This repository records the complete journey of my **Fungi Simulator** project—from early experiments and weekly reflections to the current interactive application.
+
+## Looking for the main project? (>^ω^<)
+
+The main project is inside the [`final/`](./final/) folder.
+
+### **[Enter the Final Project →](./final/)**
+
+For the clearest introduction, gameplay explanation, features, and project status, begin with:
+
+### **[Read the Fungi Simulator Project Guide →](./final/project_info/README.md)**
+
+The rest of this repository documents how the project grew, changed, occasionally broke `(´・ω・`)`, and eventually became the version inside `final/`.
 
 ---
 
-## 1. 目录结构与用途
+## What Is Fungi Simulator?
+
+**Fungi Simulator** is an interactive science-learning project inspired by parasitic fungi, insect hosts, and real biological relationships.
+
+Instead of explaining everything through ordinary textbook paragraphs, the project turns the topic into an experience where users can:
+
+- Explore fungi–host relationships.
+- Move through a three-layer environment.
+- Deploy or avoid fungal spores.
+- Compare different infection paths.
+- Watch an AI-vs-AI simulation.
+- Ask questions through a fungi-focused RAG knowledge system.
+- Learn from scientific explanations attached to the simulation.
+
+It combines **biology, game design, AI decision-making, local knowledge retrieval, and LLM engineering** in one student project. (^▽^)
+
+---
+
+## Repository Tour
+
+This repository is more than one finished application. It is also a record of the experiments, plans, prototypes, evidence, and reflections behind it.
+
+| Folder | What you will find |
+| --- | --- |
+| [`final/`](./final/) | **The main project. Start here!** Application code, backend, tests, presentations, and detailed documentation. |
+| [`demo/`](./demo/) | Early Week 1 and Week 2 prototypes showing how the idea developed. |
+| [`docs/`](./docs/) | The 15-week roadmap, MVP plans, and project-planning documents. |
+| [`data/`](./data/) | The fungi knowledge database, SQL seed data, science facts, teaching guides, and myth clarifications. |
+| [`rag/`](./rag/) | Local RAG scripts using embeddings and ChromaDB to retrieve fungi knowledge. |
+| [`eval/`](./eval/) | The workspace and guidance for evaluations, rubrics, results, and failure cases. |
+| [`logs/`](./logs/) | The workspace for runtime records, errors, metrics, and debugging evidence. |
+| [`reflection/`](./reflection/) | Weekly lessons, project reflections, future plans, and a few honest `orz` moments. |
+
+---
+
+## How the Project Evolved
+
+### 1. The First Prototype — “Can this idea work?” (^-^)
+
+The earliest version focused on turning a fungi-related idea into a small interactive prototype.
+
+See: [`demo/fungi_mvp_week01/`](./demo/fungi_mvp_week01/)
+
+### 2. The Second MVP — “Now it needs structure.” (^▽^)
+
+The next version began separating the frontend, backend, and database design. This stage helped transform the idea into a more organized software project.
+
+See: [`demo/fungi_mvp_week02/`](./demo/fungi_mvp_week02/)
+
+### 3. The Current Main Project — o(^▽^)o
+
+The version inside `final/` brings the major pieces together:
+
+- Interactive fungi and host selection.
+- A multi-layer simulation map.
+- Fungi–host scientific pairing rules.
+- Spore deployment and host movement.
+- Host abilities and infection stages.
+- Manual play and AI-vs-AI demonstration.
+- AI-generated situation explanations.
+- RAG-based fungi knowledge questions.
+- Local fallback behavior when an external AI service is unavailable.
+- Engineering notes, testing records, and presentation materials.
+
+See: [`final/`](./final/)
+
+---
+
+## What Is Inside `final/`?
 
 ```text
-04_student_portfolio_template/
-├─ docs/        # 项目文档与架构说明
-├─ eval/        # 评测数据、rubric、评测结果
-├─ logs/        # 运行日志、错误码、指标
-├─ demo/        # 演示视频与讲稿
-└─ reflection/  # 每次课/里程碑反思
+final/
+├── index.html                 # Main application page
+├── static/                    # Game logic and visual styling
+├── backend/                   # Local AI/backend service
+├── tests/                     # Regression tests
+├── project_info/              # Main README, technical guide, and test log
+├── start_local_servers.sh     # Local startup helper
+├── LLM_ENGINEERING_NOTES.md   # LLM engineering decisions and learning
+└── presentations              # Project presentation materials
 ```
 
-每个子目录均已提供 `README.md`，请先阅读再提交材料。
+Useful places to continue:
+
+- [Project introduction and gameplay](./final/project_info/README.md)
+- [Technical setup and local running guide](./final/project_info/TECHNICAL.md)
+- [Testing, failures, and limitations](./final/project_info/TEST_AND_FAILURE_LOG.md)
+- [LLM engineering notes](./final/LLM_ENGINEERING_NOTES.md)
 
 ---
 
-## 2. 推荐提交节奏（按课程里程碑）
+## Why Keep the Earlier Work?
 
-### Milestone 1（第 3 次课）
+A portfolio should show more than a polished final screen.
 
-- `docs/`：项目一页纸 + 初版 README
-- `eval/`：Prompt A/B 评测表
-- `reflection/`：M1 反思
+The early prototypes, plans, reflections, tests, and failed attempts explain:
 
-### Milestone 2（第 7 次课）
+- Where the original idea came from.
+- How the technical structure changed.
+- What did not work the first time. `:(`
+- How bugs and limitations were investigated.
+- How feedback became concrete improvements.
+- What I learned while building the project.
 
-- `eval/`：RAG 评测集 + RAG rubric + 失败案例
-- `logs/`：检索/生成日志样本
-- `reflection/`：M2 反思
-
-### Milestone 3（第 11 次课）
-
-- `logs/`：工具调用日志 + 安全拦截日志 + 指标
-- `docs/`：Agent/Tool/Safety 设计说明
-- `reflection/`：M3 反思
-
-### Milestone 4（第 15 次课）
-
-- `demo/`：最终演示视频与讲稿
-- `docs/`：完整 README + 架构图
-- `eval/`：最终评测报告
-- `reflection/`：最终总反思
+Some parts are successful, some are still developing, and some are quietly sitting in the corner like `(´・ω・`)`. Together, they show the real engineering process.
 
 ---
 
-## 3. 最低交付清单（最终）
+## Current Project Status
 
-- [ ] 完整项目 README（可复现）
-- [ ] 架构图（可读）
-- [ ] 评测表与评测结论（有证据）
-- [ ] 失败案例与改进记录
-- [ ] 运行日志与关键指标
-- [ ] Demo 视频（3-8 分钟）
-- [ ] 里程碑反思 + 最终反思
+The current main build is available in [`final/`](./final/), together with its implementation and documentation.
+
+Some supporting portfolio areas—particularly evaluation evidence, runtime logs, screenshots, and final demonstration materials—may continue to develop as the project is tested and presented.
+
+For verified behavior and known limitations, please read the documentation inside [`final/project_info/`](./final/project_info/).
 
 ---
 
-## 4. 评分对齐提示
+## Quick Navigation
 
-你的材料会被映射到课程统一维度：
+If you only have a minute:
 
-1. 问题定义清晰度
-2. 工程可运行性
-3. 评测与证据完整度
-4. 迭代与复盘质量
-5. 文档与表达质量
-6. 个人项目迁移程度
-
-准备材料时，请确保每个维度都有对应证据。
+1. Go to [`final/`](./final/).
+2. Read the [main project guide](./final/project_info/README.md).
+3. Explore the [technical guide](./final/project_info/TECHNICAL.md) if you want to run it.
+4. Check the [test and failure log](./final/project_info/TEST_AND_FAILURE_LOG.md) for the honest engineering story.
 
 ---
 
-## 5. 常见错误（建议避免）
+## Thanks for Visiting! (>^ω^<)
 
-- 只放代码，不放评测与日志
-- 只有最终结果，没有失败过程
-- README 写成功能清单，缺问题-方案-证据闭环
-- 视频可看但项目不可复现
+This repository is a record of curiosity, fungi, AI experiments, debugging, rebuilding, and learning.
 
----
+The main adventure is waiting inside:
 
-## 6. 建议工作流
+### **[Continue to the Final Fungi Simulator →](./final/)**
 
-1. 每次课后先更新 `reflection/`
-2. 运行实验后立刻补 `eval/` 与 `logs/`
-3. 每两次课更新一次 `docs/README`
-4. 最后两次课集中打磨 `demo/` 与最终展示包
-
-这样可以大幅降低期末冲刺压力，并提升作品集质量。
+`(^▽^) See you in the forest!`

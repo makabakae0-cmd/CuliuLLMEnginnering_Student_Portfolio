@@ -189,6 +189,11 @@ const autoDemo = {
     speedMultiplier: 1
 };
 
+const HOST_BASE_SURVIVAL_DAYS = 15;
+const FOOD_SURVIVAL_BONUS_DAYS = 0.2;
+const INFECTION_DURATION_DAYS = 15;
+const HOST_WIN_SURVIVAL_MARGIN_DAYS = 1.5;
+
 // Game state variables
 let gameState = {
     currentPhase: 'setup',
@@ -226,6 +231,24 @@ let gameState = {
     sanitizeUsesRemaining: 0,
     exposureCount: 0
 };
+
+function getHostSurvivalDays(foodCollected = gameState.foodCollected) {
+    const foodCount = Math.max(0, Number(foodCollected) || 0);
+    return round1(HOST_BASE_SURVIVAL_DAYS + foodCount * FOOD_SURVIVAL_BONUS_DAYS);
+}
+
+function getInfectionOutcome(foodCollected = gameState.foodCollected) {
+    const hostSurvivalDays = getHostSurvivalDays(foodCollected);
+    const infectionDays = INFECTION_DURATION_DAYS;
+    const survivalMarginDays = round1(hostSurvivalDays - infectionDays);
+    return {
+        hostSurvivalDays,
+        infectionDays,
+        survivalMarginDays,
+        foodCollected: Math.max(0, Number(foodCollected) || 0),
+        hostWins: survivalMarginDays >= HOST_WIN_SURVIVAL_MARGIN_DAYS
+    };
+}
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
@@ -1347,9 +1370,11 @@ function updateHostStatusUI() {
     if (gameState.currentPhase === 'infection') {
         hostStepStatusElement?.classList.add('hidden');
         if (skillStatus) {
+            const outcome = getInfectionOutcome();
+            const survivalText = `宿主存活 ${outcome.hostSurvivalDays.toFixed(1)} 天｜感染周期 ${outcome.infectionDays.toFixed(1)} 天｜差值 ${outcome.survivalMarginDays.toFixed(1)} 天（获胜需 ≥ ${HOST_WIN_SURVIVAL_MARGIN_DAYS.toFixed(1)}）`;
             skillStatus.textContent = gameState.isPaused
-                ? `感染观察已暂停｜已收集食物 ${gameState.foodCollected || 0}`
-                : `感染观察移动：方向键或 WASD 自由移动，不消耗回巢步数｜已收集食物 ${gameState.foodCollected || 0}`;
+                ? `感染观察已暂停｜已收集食物 ${gameState.foodCollected || 0}｜${survivalText}`
+                : `感染观察移动：方向键或 WASD 自由移动，不消耗回巢步数｜已收集食物 ${gameState.foodCollected || 0}｜${survivalText}`;
         }
         return;
     }
@@ -1448,7 +1473,7 @@ function moveHost(direction) {
     gameState.hostPosition = projected;
     if (isInfectionMove) {
         updateHostIndicator();
-        if (checkForFoodAtPosition()) gameState.foodCollected += 1;
+        checkForFoodAtPosition();
         updateHostStatusUI();
         return;
     }
@@ -1816,7 +1841,7 @@ function renderFoodItem(food) {
     foodElement.textContent = food.emoji || '🍃';
     foodElement.setAttribute('role', 'img');
     foodElement.setAttribute('aria-label', '生态食物');
-    foodElement.title = '生态食物（每 15 秒或进入新阶段刷新）';
+    foodElement.title = `生态食物（每块增加 ${FOOD_SURVIVAL_BONUS_DAYS.toFixed(1)} 天宿主存活时间；每 15 秒或进入新阶段刷新）`;
     foodElement.style.left = `${food.x}%`;
     foodElement.style.top = `${food.y}%`;
     grid.appendChild(foodElement);
@@ -1832,11 +1857,13 @@ function checkForFoodAtPosition() {
 
     const [collected] = gameState.foodItems.splice(index, 1);
     document.getElementById(collected.id)?.remove();
+    gameState.foodCollected = Math.max(0, Number(gameState.foodCollected) || 0) + 1;
     const replacement = createFoodItem();
     if (replacement) {
         gameState.foodItems.push(replacement);
         renderFoodItem(replacement);
     }
+    updateHostStatusUI();
     return true;
 }
 
@@ -1906,62 +1933,32 @@ function showEvent(message) {
     alert(message);
 }
 
-// Calculate maximum survival days based on host type, environment, and nutrition
+// Compatibility helper retained for older callers.
 function calculateMaxSurvivalDays() {
-    let baseDays = 10; // Base survival days
-    
-    // Host type modifiers
-    switch (gameState.hostType) {
-        case 'camponotus':
-            baseDays += 2; // +2 days
-            break;
-        case 'ponerine':
-            baseDays += 1; // +1 day
-            break;
-        case 'atta':
-            baseDays += 3; // +3 days (stronger immune system)
-            break;
-        case 'ghost_moth':
-            baseDays += 5; // +5 days (larval stage advantage)
-            break;
-    }
-    
-    // Environment modifiers
-    switch (gameState.environment) {
-        case 'rainforest':
-            baseDays -= 1; // -1 day (high humidity favors fungus)
-            break;
-        case 'jungle':
-            baseDays -= 0.5; // -0.5 days
-            break;
-        case 'dry_forest':
-            baseDays += 1; // +1 day (dry conditions hinder fungus)
-            break;
-        case 'alpine_meadow':
-            if (gameState.hostType === 'ghost_moth') {
-                baseDays += 2; // +2 days (cold temperatures slow infection, beneficial for ghost moth)
-            } else {
-                baseDays = 0; // Other hosts die immediately in alpine meadow
-            }
-            break;
-    }
-    
-    // Nutrition level modifier
-    if (gameState.nutrition === 'high') {
-        baseDays += 2; // +2 days
-    } else if (gameState.nutrition === 'medium') {
-        baseDays += 1; // +1 day
-    } // low nutrition: no bonus
-    
-    // Ensure minimum of 5 days and maximum of 25 days (except immediate death cases)
-    if (baseDays <= 0) {
-        return 0; // Immediate death
-    }
-    return Math.max(5, Math.min(25, baseDays));
+    return getHostSurvivalDays();
+}
+
+function resolveCompletedInfection(strategy = '感染生存判定') {
+    const outcome = getInfectionOutcome();
+    const resultType = outcome.hostWins ? 'host_victory' : 'fungus_victory';
+    const comparison = `${outcome.hostSurvivalDays.toFixed(1)} − ${outcome.infectionDays.toFixed(1)} = ${outcome.survivalMarginDays.toFixed(1)} 天`;
+    const message = outcome.hostWins
+        ? `宿主胜利！生存优势为 ${comparison}，达到 ${HOST_WIN_SURVIVAL_MARGIN_DAYS.toFixed(1)} 天门槛`
+        : `真菌胜利！生存优势为 ${comparison}，未达到 ${HOST_WIN_SURVIVAL_MARGIN_DAYS.toFixed(1)} 天门槛`;
+
+    showResult(resultType, message, {
+        strategy,
+        survivalDays: outcome.hostSurvivalDays,
+        infectionDays: outcome.infectionDays,
+        survivalMarginDays: outcome.survivalMarginDays,
+        foodCollected: outcome.foodCollected,
+        requiredMarginDays: HOST_WIN_SURVIVAL_MARGIN_DAYS
+    });
+    return outcome;
 }
 
 // Show result screen
-function showResult(resultType, message, stats) {
+function showResult(resultType, message, stats = {}) {
     clearInterval(gameState.timer);
     clearTimeout(gameState.simulationTimer);
     stopFoodRefreshLoop();
@@ -1992,7 +1989,13 @@ function showResult(resultType, message, stats) {
     statsHTML += `<p>• 真菌类型: ${getFungusTypeName(gameState.fungusType)}</p>`;
     statsHTML += `<p>• 配对效果: ${getPairMatch().label}</p>`;
     
-    if (stats.strategy === '规避') {
+    if (Number.isFinite(stats.survivalDays) && Number.isFinite(stats.infectionDays)) {
+        statsHTML += `<p>• 策略: ${stats.strategy || '感染生存判定'}</p>`;
+        statsHTML += `<p>• 收集食物: ${stats.foodCollected || 0} 块（每块 +${FOOD_SURVIVAL_BONUS_DAYS.toFixed(1)} 天）</p>`;
+        statsHTML += `<p>• 宿主存活天数: ${Number(stats.survivalDays).toFixed(1)} 天</p>`;
+        statsHTML += `<p>• 感染天数: ${Number(stats.infectionDays).toFixed(1)} 天</p>`;
+        statsHTML += `<p>• 生存差值: ${Number(stats.survivalMarginDays).toFixed(1)} 天（宿主获胜需 ≥ ${Number(stats.requiredMarginDays).toFixed(1)} 天）</p>`;
+    } else if (stats.strategy === '规避') {
         statsHTML += `<p>• 策略: ${stats.strategy}</p>`;
         statsHTML += `<p>• 步数: ${stats.steps}</p>`;
     } else if (stats.strategy === '抵抗') {
@@ -2119,10 +2122,9 @@ function startInfectionLoop() {
             clearInterval(gameState.simulationTimer);
             gameState.simulationTimer = null;
             stopFoodRefreshLoop();
-            showResult('fungus_victory', '感染成功！真菌完成感染与孢子释放阶段', {
-                stages: totalStages,
-                strategy: getPairMatch().compatible ? '科学匹配感染' : '实验性组合'
-            });
+            resolveCompletedInfection(
+                getPairMatch().compatible ? '科学匹配感染生存判定' : '实验性组合感染生存判定'
+            );
         }
     }, 250);
 }
@@ -2594,7 +2596,9 @@ const AUTO_DEMO_STEP_DELAY_MS = 900;
 const AUTO_DEMO_INFECTION_SPEED_MS = 20000;
 const AUTO_DEMO_INFECTION_MAX_MS = 200000;
 const AUTO_DEMO_INFECTED_HOST_DELAY_MS = 2400;
-const AUTO_DEMO_INFECTED_HOST_MAX_ACTIONS = 10;
+// Keep the infected host moving for the full accelerated infection sequence.
+// The result screen still provides the hard stop, so this is only a safety cap.
+const AUTO_DEMO_INFECTED_HOST_MAX_ACTIONS = 100;
 
 function isAutoDemoRunning() {
     return autoDemo.active;
@@ -3238,6 +3242,7 @@ function getActionStatusHint(action) {
 
 function buildAICommentarySnapshot() {
     const hostPos = { ...gameState.hostPosition, x: round1(gameState.hostPosition.x), y: round1(gameState.hostPosition.y) };
+    const survivalOutcome = getInfectionOutcome();
     const spores = (gameState.spores || []).map((s) => ({
         layer: s.layer,
         x: round1(s.x),
@@ -3252,9 +3257,10 @@ function buildAICommentarySnapshot() {
         fungusType: getFungusTypeName(gameState.fungusType),
         infectionStage: gameState.currentInfectionStage,
         totalStages: getInfectionStageCount(),
-        outcome: 'fungus_victory',
+        outcome: survivalOutcome.hostWins ? 'host_victory' : 'fungus_victory',
         stepsTaken: gameState.stepsTaken,
         maxSteps: gameState.maxSteps,
+        survival: survivalOutcome,
         hostPosition: hostPos,
         spores,
         summary: {
@@ -3270,13 +3276,15 @@ function buildAICommentaryMeta(snapshot) {
     return (
         `阶段：${gameState.currentInfectionStage}/${getInfectionStageCount()}\n` +
         `宿主：${getHostTypeName(gameState.hostType)} | 真菌：${getFungusTypeName(gameState.fungusType)} | 环境：${getEnvironmentName(gameState.environment)}\n` +
-        `匹配关系：${match.compatible ? '科学匹配' : '实验性不匹配组合'} | 结局：感染成功\n` +
+        `匹配关系：${match.compatible ? '科学匹配' : '实验性不匹配组合'} | 当前预测：${snapshot.outcome === 'host_victory' ? '宿主方' : '真菌方'}\n` +
+        `宿主存活：${snapshot.survival?.hostSurvivalDays?.toFixed?.(1) || '15.0'} 天 | 感染周期：${snapshot.survival?.infectionDays?.toFixed?.(1) || '15.0'} 天 | 差值：${snapshot.survival?.survivalMarginDays?.toFixed?.(1) || '0.0'} 天\n` +
         `孢子分布(0/1/2层)：${sporeCounts[0]}/${sporeCounts[1]}/${sporeCounts[2]}`
     );
 }
 
 function buildLocalAICommentary(snapshot) {
     const match = getPairMatch();
+    const outcome = snapshot.survival || getInfectionOutcome();
     return [
         '【当前局面】',
         match.compatible
@@ -3292,9 +3300,9 @@ function buildLocalAICommentary(snapshot) {
         `- 当前配对为 ${getFungusTypeName(gameState.fungusType)} × ${getHostTypeName(gameState.hostType)}。`,
         '',
         '【胜负预测】',
-        '胜方：真菌方',
-        '置信度：1.00',
-        '原因：宿主已经达到本局设定的有效接触阈值并触发感染。'
+        `胜方：${outcome.hostWins ? '宿主方' : '真菌方'}`,
+        `当前生存差值：${outcome.survivalMarginDays.toFixed(1)} 天（宿主获胜需 ≥ ${HOST_WIN_SURVIVAL_MARGIN_DAYS.toFixed(1)} 天）`,
+        `原因：宿主基础存活 ${HOST_BASE_SURVIVAL_DAYS.toFixed(1)} 天，每块食物增加 ${FOOD_SURVIVAL_BONUS_DAYS.toFixed(1)} 天，完整感染周期为 ${INFECTION_DURATION_DAYS.toFixed(1)} 天。`
     ].join('\n');
 }
 
@@ -3353,9 +3361,7 @@ function buildInfectedHostAISnapshot() {
         weightedDistance: getWeightedFoodDistance(food, hostPos),
         sameLayer: food.layer === hostPos.layer
     })).sort((a, b) => a.weightedDistance - b.weightedDistance);
-    const stepsSinceInfection = Math.max(0, gameState.stepsTaken - gameState.infectionStep);
-    const nextPenaltyAt = (Math.floor(stepsSinceInfection / 3) + 1) * 3;
-
+    const survivalOutcome = getInfectionOutcome();
     return {
         phase: 'infected_host_survival',
         hostType: getHostTypeName(gameState.hostType),
@@ -3363,14 +3369,14 @@ function buildInfectedHostAISnapshot() {
         fungusType: getFungusTypeName(gameState.fungusType),
         infectionStage: gameState.currentInfectionStage,
         totalStages: getInfectionStageCount(),
-        outcome: 'fungus_victory',
+        outcome: survivalOutcome.hostWins ? 'host_victory' : 'fungus_victory',
         hostPosition: hostPos,
         isHostControllable: gameState.isHostControllable,
         stepsTaken: gameState.stepsTaken,
         infectionStep: gameState.infectionStep,
-        stepsSinceInfection,
-        stepsUntilNextMovementPenalty: Math.max(0, nextPenaltyAt - stepsSinceInfection),
-        movementPenalty: 'V1 感染后不再移动',
+        infectionMovementConsumesReturnHomeSteps: false,
+        movementRule: '感染后可继续移动和换层寻找食物，不消耗回巢步数',
+        survival: survivalOutcome,
         nearestFood: foods[0] || null,
         visibleFoodItems: foods.slice(0, 5),
         recentInfectedActions: autoDemo.infectedHostHistory.slice(-5),
@@ -3504,7 +3510,8 @@ function planInfectedRouteToNearestFood(maxActionsRemaining = AUTO_DEMO_INFECTED
 }
 
 function getInfectedHostFallbackAction() {
-    return { action: 'wait' };
+    if (!gameState.isHostControllable) return { action: 'wait' };
+    return planInfectedRouteToNearestFood(1)[0] || { action: 'wait' };
 }
 
 function repairInfectedHostAction(action) {
@@ -3516,19 +3523,22 @@ function repairInfectedHostAction(action) {
 async function decideInfectedHostActionAI() {
     const snapshot = buildInfectedHostAISnapshot();
     const prompt = `
-你是 Fungi Simulator 中的感染阶段观察器。V1 中宿主感染后不再行动，只能输出 wait。
+你是 Fungi Simulator 中感染后的宿主 AI。感染后宿主仍会移动，并尝试寻找最近的可见食物。
 
 【可见信息】
 - 你可以看到感染阶段和当前配对是否为科学匹配；不匹配组合只能按游戏平衡抽象解释。
-- 你不知道未来随机事件，只能基于当前快照做求生决策。
+- 你可以看到当前食物位置，但不知道未来随机事件，只能基于当前快照做求生决策。
 
 【策略】
 - 如果当前阶段不可控，输出 wait。
-- 始终输出 wait，感染阶段只用于生物学展示。
+- 优先向 nearestFood 移动；如果食物在其他可达图层，先用 layer 切层。
+- 不要撞地图边界；只有没有可行移动时才输出 wait。
 
 【输出要求】
 只输出严格 JSON，不要解释，不要 Markdown。格式只能是：
-{"action":"wait"}
+{"action":"move","direction":"up|down|left|right"}
+或 {"action":"layer","delta":1|-1}
+或 {"action":"wait"}
 
 【当前感染后局面 JSON】
 ${JSON.stringify(snapshot)}
@@ -3659,10 +3669,11 @@ function forceAutoDemoResult(reason = 'timeout') {
         });
         return;
     }
-    showResult('fungus_victory', '感染成功！AI 自动演示完成感染阶段', {
-        stages: gameState.currentInfectionStage,
-        strategy: reason === 'timeout' ? '自动结算' : (getPairMatch().compatible ? '科学匹配感染' : '实验性组合')
-    });
+    resolveCompletedInfection(
+        reason === 'timeout'
+            ? 'AI 自动演示超时生存判定'
+            : (getPairMatch().compatible ? 'AI 科学匹配感染生存判定' : 'AI 实验性组合生存判定')
+    );
 }
 
 async function finishAutoDemoIfUnresolved(token, reason = 'unresolved') {
@@ -3741,7 +3752,7 @@ function recordInfectedHostAction(action, beforeSnapshot, collectedFood) {
 
 function applyInfectedHostDemoAction(action, beforeSnapshot) {
     const normalized = repairInfectedHostAction(action);
-    const beforeFoodCount = gameState.foodItems.length;
+    const beforeCollectedCount = gameState.foodCollected || 0;
 
     if (normalized.action === 'layer') {
         changeLayer(normalized.delta);
@@ -3750,7 +3761,7 @@ function applyInfectedHostDemoAction(action, beforeSnapshot) {
     }
 
     checkForFoodAtPosition();
-    const collectedFood = gameState.foodItems.length < beforeFoodCount;
+    const collectedFood = (gameState.foodCollected || 0) > beforeCollectedCount;
     recordInfectedHostAction(normalized, beforeSnapshot, collectedFood);
     return { action: normalized, collectedFood };
 }
@@ -3783,7 +3794,7 @@ async function playInfectedHostPlan(actions, token, actionsTaken) {
         collectedFood = collectedFood || result.collectedFood;
 
         if (result.collectedFood) {
-            setDemoStatus('感染阶段仅用于展示，宿主不再执行求生行动');
+            setDemoStatus(`感染后宿主 AI 已找到食物，累计收集 ${gameState.foodCollected || 0} 个`);
         }
 
         await demoSleep(AUTO_DEMO_INFECTED_HOST_DELAY_MS);
@@ -3929,6 +3940,15 @@ async function runInfectionDemoPhase(token) {
     gameState.isPaused = false;
     startInfectionLoop();
 
+    // Infection progression and infected-host movement must run together.
+    // Previously this phase only waited for the stage timer, leaving the host
+    // motionless even though the movement planner was already implemented.
+    const infectedHostTask = runInfectedHostAIDemoLoop(token).catch((error) => {
+        if (!isDemoStoppedError(error)) {
+            console.warn('感染后宿主 AI 循环失败，感染阶段继续播放:', error);
+        }
+        return 'stopped';
+    });
     const outcome = await waitForDemoResult(token, AUTO_DEMO_INFECTION_MAX_MS);
     if (outcome === 'timeout') {
         setDemoStatus('感染演示达到时长上限，正在自动结算胜负…');
@@ -3936,6 +3956,7 @@ async function runInfectionDemoPhase(token) {
     } else if (outcome === 'finished') {
         setDemoStatus('AI 对 AI 演示结束，已产生胜负结果');
     }
+    await infectedHostTask;
 }
 
 async function runAutoDemoSequence(token) {
@@ -4078,7 +4099,7 @@ async function generateAICommentary() {
 【重要规则（必须遵守）】
 1) 只输出严格 JSON（一个对象），禁止输出任何额外文字、解释、Markdown、代码块。
 2) 内容要面向玩家可读：短句、要点化、可执行建议。
-3) 当前是“感染阶段”：胜负判定以你对局面与机制的理解为准，并给出置信度(0~1)。
+3) 当前是“感染阶段”：必须使用快照中的 survival 数据判定。宿主存活天数减感染天数达到 1.5 天时宿主胜利，否则真菌胜利。
 4) 不要编造不存在的数据；只能使用快照里提供的信息与合理推断。
 5) 额外产出一段“诙谐幽默的两句话描述”，必须恰好两句、中文、每句<=30字，不要使用表情符号。
 
@@ -4719,10 +4740,7 @@ function changeLayer(direction) {
         
         updateHostStatusUI();
         if (isInfectionMove) {
-            if (checkForFoodAtPosition()) {
-                gameState.foodCollected += 1;
-                updateHostStatusUI();
-            }
+            checkForFoodAtPosition();
         } else {
             settleHostAction();
         }
@@ -5080,22 +5098,10 @@ function advanceInfectionStage() {
             setTimeout(() => {
                 clearInterval(gameState.simulationTimer);
                 const isGhostMothSpecial = (gameState.hostType === 'ghost_moth' && gameState.environment === 'alpine_meadow');
-                if (isGhostMothSpecial) {
-                    showResult('fungus_victory', '感染胜利！珍贵的冬虫夏草"独角"子实体成功生长', {
-                        stages: 8,
-                        strategy: '冬虫夏草完整生命周期'
-                    });
-                } else if (gameState.fungusType === 'sinensis') {
-                    showResult('fungus_victory', '感染胜利！冬虫夏草完成完整感染周期', {
-                        stages: 8,
-                        strategy: '冬虫夏草感染'
-                    });
-                } else {
-                    showResult('fungus_victory', '感染胜利！宿主完成8阶段感染周期后死亡', {
-                        stages: 8,
-                        strategy: '完整感染周期'
-                    });
-                }
+                const strategy = isGhostMothSpecial || gameState.fungusType === 'sinensis'
+                    ? '冬虫夏草完整周期生存判定'
+                    : '完整感染周期生存判定';
+                resolveCompletedInfection(strategy);
             }, 3000); // Longer delay to show stage 8 message
         }
     }
